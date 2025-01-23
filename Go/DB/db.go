@@ -1,23 +1,22 @@
 package database
 
 import (
-	_"github.com/mattn/go-sqlite3"
 	"database/sql"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 
+	_ "github.com/mattn/go-sqlite3"
 )
 
+func ConnectDB(dir, fileName, schemesDir string) {
 
-
-func ConnectDB( dir, fileName, schemesDir string) (*sql.DB, error) {
-	
 	isNewDB := !fileExists(filepath.Join(dir, fileName))
 	if isNewDB {
 		err := os.MkdirAll(dir, os.ModePerm)
 		if err != nil {
-			return nil, err
+			log.Fatal(err)
 		}
 	}
 
@@ -26,26 +25,25 @@ func ConnectDB( dir, fileName, schemesDir string) (*sql.DB, error) {
 
 	db, err := sql.Open("sqlite3", dataSourceName)
 	if err != nil {
-		return nil, err
+		log.Fatal(err)
 	}
 
 	err = db.Ping()
 	if err != nil {
-		return nil, err
+		log.Fatal(err)
 	}
 
 	_, err = db.Exec("PRAGMA journal_mode=WAL")
 	if err != nil {
-		return nil, err
+		log.Fatal(err)
 	}
 
 	if isNewDB {
 		if err = prepareDB(db, schemesDir); err != nil {
-			return nil, err
+			log.Fatal(err)
 		}
 	}
 
-	return db, nil
 }
 
 func fileExists(fileName string) bool {
