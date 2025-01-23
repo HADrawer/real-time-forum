@@ -1,7 +1,8 @@
 package main
 
 import(
-	"Real-Time/Go"
+	"Real-Time/Go/DB"
+
 )
 
 func main(){
