@@ -6,8 +6,10 @@ import (
 	"os"
 	"path/filepath"
 
-	_ "github.com/mattn/go-sqlite3"
+	// _ "github.com/mattn/go-sqlite3"
 )
+
+
 
 func ConnectDB(driver, dir, fileName, schemesDir string) (*sql.DB, error) {
 	isNewDB := !fileExists(filepath.Join(dir, fileName))
