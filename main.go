@@ -7,5 +7,5 @@ import(
 
 func main(){
 	database.ConnectDB("./Database/", "forum.db","./Database/schema/")
-}
 
+}
