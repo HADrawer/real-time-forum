@@ -1,7 +1,7 @@
 package database
 
 import (
-	"github.com/mattn/go-sqlite3"
+	_"github.com/mattn/go-sqlite3"
 	"database/sql"
 	"io/ioutil"
 	"os"
@@ -12,7 +12,7 @@ import (
 
 
 func ConnectDB( dir, fileName, schemesDir string) (*sql.DB, error) {
-	driver := "sqlite3"
+	
 	isNewDB := !fileExists(filepath.Join(dir, fileName))
 	if isNewDB {
 		err := os.MkdirAll(dir, os.ModePerm)
@@ -24,7 +24,7 @@ func ConnectDB( dir, fileName, schemesDir string) (*sql.DB, error) {
 	enableForeignKeys := "?_foreign_keys=on&cache=shared&mode=rwc"
 	dataSourceName := filepath.Join(dir, fileName) + enableForeignKeys
 
-	db, err := sql.Open(driver, dataSourceName)
+	db, err := sql.Open("sqlite3", dataSourceName)
 	if err != nil {
 		return nil, err
 	}
