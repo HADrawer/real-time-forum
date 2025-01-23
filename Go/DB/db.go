@@ -1,17 +1,18 @@
 package database
 
 import (
+	"github.com/mattn/go-sqlite3"
 	"database/sql"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
-	// _ "github.com/mattn/go-sqlite3"
 )
 
 
 
-func ConnectDB(driver, dir, fileName, schemesDir string) (*sql.DB, error) {
+func ConnectDB( dir, fileName, schemesDir string) (*sql.DB, error) {
+	driver := "sqlite3"
 	isNewDB := !fileExists(filepath.Join(dir, fileName))
 	if isNewDB {
 		err := os.MkdirAll(dir, os.ModePerm)
