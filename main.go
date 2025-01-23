@@ -18,8 +18,8 @@ func main(){
 	log.Print("Server is running on http://localhost:8080")
 
 
+	http.Handle("/Css/", http.StripPrefix("/Css/",http.FileServer(http.Dir("Css"))))
 	http.Handle("/Js/", http.StripPrefix("/Js/",http.FileServer(http.Dir("Js"))))
-	http.Handle("/Css/", http.StripPrefix("/Js/",http.FileServer(http.Dir("Css"))))
 
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatal("Failed to start server: ", err)
