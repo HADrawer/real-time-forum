@@ -1,0 +1,94 @@
+/* the initial font */
+/* maybe change if teammate didn't like it */
+@import url('https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400..800&family=Pixelify+Sans:wght@400..700&display=swap');
+
+* {
+    font-family: "Pixelify Sans", serif;
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
+}
+
+html , body {
+    background-color: #A7E6FF;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+body {
+    display: flex;
+    flex-direction: column;
+}
+header {
+    background-color: #3572EF;
+    padding: 15px;
+    box-shadow: 0px 2px 15px  #050C9C;
+}
+.headerDiv{
+    display: flex;
+    align-items: center;
+    justify-content: space-between ;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.Project-Name a{
+    font-size: 35px;
+    font-weight: 600;
+    color: #A7E6FF ;
+    text-decoration: none;
+}
+nav ul{
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 20;
+}
+
+nav ul li{
+    list-style: none;
+}
+
+nav ul li a {
+        color: #A7E6FF;
+        font-size: 18px;
+        font-weight: bold;
+        margin-right: 25px;
+        text-decoration: none;
+    }
+
+nav ul li a:hover {
+    text-decoration: underline;
+}
+
+button{
+    background-color: #A7E6FF ;
+    border: none;
+    border-radius: 10px;
+    padding: 10px;
+    width:90px ;
+    cursor: pointer;
+}
+button a{
+    color: black;
+    font-weight: bold;
+    font-size: 15px;
+    text-decoration: none;
+}
+
+main{
+    flex: 1;
+    padding: 20px;
+}
+
+footer {
+    background-color: #3572EF; 
+    color: #A7E6FF; 
+    text-align: center;
+    padding: 10px;   
+    box-shadow: 0px -2px 15px #050C9C;
+}
+footer p {
+    font-size: 20px;
+    margin: 0;
+}
