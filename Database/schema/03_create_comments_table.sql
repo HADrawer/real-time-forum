@@ -1,11 +1,10 @@
 CREATE TABLE comments (
   id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
-  status INTEGER NOT NULL,
   user_id INTEGER NOT NULL,
   post_id INTEGER NOT NULL,
-  data TEXT NOT NULL,
-  image TEXT,
-  date DATETIME,
+  content TEXT NOT NULL,
+  author TEXT NOT NULL,
+  created_at DATETIME,
   FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY(post_id) REFERENCES posts(id) ON DELETE CASCADE
 );

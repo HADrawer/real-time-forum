@@ -27,5 +27,57 @@ func RenderTemplate(w http.ResponseWriter) {
 }
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/" {
+		http.Redirect(w,r,"/",  http.StatusFound)
+		return
+	}
+	_, isLoggedIn := GetUserIDFromSession(r)
+	if !isLoggedIn {
+		http.Redirect(w,r,"/login", http.StatusSeeOther)
+	}
+	
+	RenderTemplate(w)
+}
+func RegisterHandler(w http.ResponseWriter, r *http.Request) {
+	_, isLoggedIn := GetUserIDFromSession(r)
+	if isLoggedIn {
+		http.Redirect(w,r,"/", http.StatusSeeOther)
+	}
+	
+	if r.Method == http.MethodGet {
+
+		RenderTemplate(w)
+	}
+
+	if r.Method == http.MethodPost {
+		
+
+
+	}
+	
+}
+func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	_, isLoggedIn := GetUserIDFromSession(r)
+	if isLoggedIn {
+		http.Redirect(w,r,"/", http.StatusSeeOther)
+	}
+
+	if r.Method == http.MethodGet {
+
+		RenderTemplate(w)
+	}
+
+	if r.Method == http.MethodPost {
+		
+
+
+	}
+}
+
+func MessagesHandler(w http.ResponseWriter, r *http.Request) {
+	RenderTemplate(w)
+}
+
+func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	RenderTemplate(w)
 }

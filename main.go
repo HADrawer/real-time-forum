@@ -5,14 +5,25 @@ import (
 	"Real-Time/Go/handlers"
 	"log"
 	"net/http"
+	
 )
 
 func main(){
-	database.ConnectDB("./Database/", "forum.db","./Database/schema/")
+	database.Init()
 
 
 
 	http.HandleFunc("/", handlers.HomeHandler )
+	http.HandleFunc("/login", handlers.LoginHandler )
+	http.HandleFunc("/register", handlers.RegisterHandler )
+	http.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
+		handlers.DestroySession(w,r)
+		http.Redirect(w,r,"/",http.StatusSeeOther)
+	})
+	http.HandleFunc("/Direct", handlers.MessagesHandler)
+	http.HandleFunc("/Create", handlers.CreatePostHandler)
+	
+
 
 
 	log.Print("Server is running on http://localhost:8080")

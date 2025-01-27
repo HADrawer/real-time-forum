@@ -1,6 +1,6 @@
 CREATE TABLE sessions (
   user_id INTEGER NOT NULL,
-  refresh_token TEXT NOT NULL UNIQUE,
+  session_id VARCHAR(36) PRIMARY KEY,
   expires_at DATETIME NOT NULL,
   FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
 );
