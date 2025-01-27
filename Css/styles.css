@@ -97,8 +97,8 @@ footer p {
     margin: 0;
 }
 
-/* ----------------- Register Style ------------------*/
-.register {
+/* ----------------- register-login Style ------------------*/
+.register-login {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -107,7 +107,7 @@ footer p {
 }
 
 
-.register-form {
+.register-login-form {
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -145,17 +145,17 @@ footer p {
     width: 100%;
     gap: 6px;
 }
-.register-form label {
+.register-login-form label {
     position: relative;
 }
-.register-form label input {
+.register-login-form label input {
     width: 100%;
     padding: 10px 10px 20px 20px;
     outline: none;
     border: none;
     border-radius: 10px;
 }
-.register-form label input + span {
+.register-login-form label input + span {
     position: absolute;
     left: 10px;
     top: 15px;
@@ -165,21 +165,21 @@ footer p {
     transition: 0.3s ease;
 }
 
-.register-form label input:placeholder-shown + span {
+.register-login-form label input:placeholder-shown + span {
     top: 15px;
     font-size: 0.9em;
 }
 
-.register-form label input:focus + span,
-.register-form label input:valid + span {
+.register-login-form label input:focus + span,
+.register-login-form label input:valid + span {
     top: 30px;
     font-size: 0.7em;
     font-weight: 600;
 }
-.register-form label input:valid + span {
+.register-login-form label input:valid + span {
     color: #050C9C;
 }
-.register-form label .icon {
+.register-login-form label .icon {
     position: absolute;
     top: 50%;
     right: 10px;
@@ -194,7 +194,7 @@ footer p {
     z-index: 9;
 }
 
-.submitRegister {
+.submitregister-login {
     border: none;
     outline: none;
     background: #3572EF;
@@ -205,7 +205,7 @@ footer p {
     transform: 0.3s ease;
     cursor: pointer;
 }
-.submitRegister:hover {
+.submitregister-login:hover {
     background: #050C9C;
     transition: 0.3s;
 }

@@ -40,9 +40,9 @@ function fetchAndRenderHomePage(){
 }
 function fetchAndRenderRegister(){
     document.getElementById('content').innerHTML = ` 
-            <div class="register">
+            <div class="register-login">
                 
-                    <form action="/register" class="register-form" method="post">
+                    <form action="/register" class="register-login-form" method="post">
                     <p class="title">Register</p>
                     <p class="message">Sign up here </p>
                     <div class="form-group">
@@ -81,7 +81,7 @@ function fetchAndRenderRegister(){
                         <span>Confirm password</span>
                         <span class="icon" id="togglePasswordConfirm"><i class="far fa-eye-slash" ></i></span>
                     </label>
-                <button class="submitRegister">Submit</button>
+                <button class="submitregister-login">Submit</button>
                 <p class="signin">
                     Already have an account? <a href="/login">Signin </a>
                 </p>
@@ -92,14 +92,14 @@ function fetchAndRenderRegister(){
 }
 function fetchAndRenderLogin(){
     document.getElementById('content').innerHTML = ` 
-            <div class="register">
+            <div class="register-login">
                 
-                    <form action="/register" class="register-form" method="post">
+                    <form action="/login" class="register-login-form" method="post">
                     <p class="title">Login</p>
                     <p class="message">login here </p>
                     
                     <label>
-                        <input type="text" name="username"  required>
+                        <input type="text" name="email"  required>
                         <span>username or email</span>
                     </label>
                     
@@ -110,7 +110,8 @@ function fetchAndRenderLogin(){
                         <span class="icon" id="togglePassword"><i class="far fa-eye-slash" ></i></span>
                     </label>
                    
-                <button class="submitRegister">Submit</button>
+                <button class="submitregister-login">Submit</button>
+                <span style="color:red; ">{{.InvalidLogin}}</span>
                 <p class="signin">
                      don't have an account? <a href="/register">Register </a>
                 </p>

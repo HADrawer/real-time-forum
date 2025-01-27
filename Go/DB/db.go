@@ -165,8 +165,8 @@ func GetUserIDFromSession(cookie *http.Cookie, userID int, expiresAt time.Time) 
 
 func GetUsernameFromUserID(userID int) (*User, error) {
 	var user User
-	err := db.QueryRow(" username , first_name , last_name , age , gender , email , password FROM users WHERE id = ?", userID).
-		Scan(&user.Username, &user.FirstName, &user.LastName, &user.Age, &user.Gender, &user.Email, &user.Password)
+	err := db.QueryRow(" id ,username , first_name , last_name , age , gender , email , password FROM users WHERE id = ?", userID).
+		Scan(&user.ID,&user.Username, &user.FirstName, &user.LastName, &user.Age, &user.Gender, &user.Email, &user.Password)
 	if err != nil {
 		return nil, errors.New("user not found")
 	}
@@ -196,10 +196,49 @@ func CreateUser(user User) error {
 
 func GetUserByEmail(email string) (*User, error) {
 	var user User
-	err := db.QueryRow("SELECT id FROM users WHERE email = ?", email).
-		Scan(&user.ID)
+	err := db.QueryRow("SELECT id,password FROM users WHERE email = ?", email).
+		Scan(&user.ID , &user.Password)
 	if err != nil {
 		return nil, errors.New("user not found")
 	}
 	return &user, nil
+}
+func GetUserByUsername(username string) (*User, error) {
+	var user User
+	err := db.QueryRow("SELECT id , password FROM users WHERE username = ?", username).
+	Scan(&user.ID, &user.Password)
+	if err != nil {
+		return nil, errors.New("user not found")
+	}
+	return &user, nil
+}
+
+
+func GetAllCategories() ([]Category, error) {
+	rows, err := db.Query("SELECT id , name FROM categories")
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch categories: %w", err)
+	}
+	defer rows.Close()
+
+	var categories []Category
+
+	for rows.Next() {
+		var category Category
+		if err := rows.Scan(&category.ID, &category.Name); err != nil {
+			return nil, fmt.Errorf("failed to scan category: %w", err)
+		}
+		categories = append(categories, category)
+	}
+	return categories, nil
+}
+
+func CreatePost(userID int , title string, content string, categories string) error {
+	stmt , err := db.Prepare("INSERT INTO posts (user_id , title , content , author , category) VALUES (?,?,?,?,?)")
+	if err != nil {
+		return err
+	}
+	user, _ := GetUsernameFromUserID(userID)
+	_ , err = stmt.Exec(user.ID, title,content,user.Username, categories)
+	return err
 }
