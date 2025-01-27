@@ -165,7 +165,7 @@ func GetUserIDFromSession(cookie *http.Cookie, userID int, expiresAt time.Time) 
 
 func GetUsernameFromUserID(userID int) (*User, error) {
 	var user User
-	err := db.QueryRow(" id ,username , first_name , last_name , age , gender , email , password FROM users WHERE id = ?", userID).
+	err := db.QueryRow("SELECT id ,username , first_name , last_name , age , gender , email , password FROM users WHERE id = ?", userID).
 		Scan(&user.ID,&user.Username, &user.FirstName, &user.LastName, &user.Age, &user.Gender, &user.Email, &user.Password)
 	if err != nil {
 		return nil, errors.New("user not found")
@@ -238,7 +238,10 @@ func CreatePost(userID int , title string, content string, categories string) er
 	if err != nil {
 		return err
 	}
-	user, _ := GetUsernameFromUserID(userID)
-	_ , err = stmt.Exec(user.ID, title,content,user.Username, categories)
+	user, err := GetUsernameFromUserID(userID)
+	if err != nil {
+		return err
+	}
+	_ , err = stmt.Exec(userID, title,content,user.Username, categories)
 	return err
 }

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	database "Real-Time/Go/DB"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"log"
@@ -164,13 +165,15 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		Categories, _ := database.GetAllCategories()
 		pageData := make(map[string]interface{})
 		var postDetails []map[string]interface{}
-		for _, Catagory := range Categories {
+		for _, Category := range Categories {
 			postDetail := map[string]interface{}{
-				"Catagory": Catagory.Name,
+				"Category": Category.Name,
 			}
 			postDetails = append(postDetails, postDetail)
 		}
+		pageData["IsLoggedIn"] = isLoggedIn
 		pageData["Categories"] = postDetails
+		
 		RenderTemplate(w, pageData)
 		return
 	}
@@ -179,7 +182,6 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		content := r.FormValue("content")
 		categories := r.Form["categories[]"]
 		stringCategories := strings.Join(categories, ",")
-
 		if title == "" || content == "" || len(categories) == 0 {
 
 			http.Error(w, "Bad request: Missing PostID or Comment", http.StatusBadRequest)
@@ -194,4 +196,17 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
+}
+func CreateDataHandler(w http.ResponseWriter , r *http.Request) {
+	categories, err := database.GetAllCategories()
+    if err != nil {
+        http.Error(w, "Unable to load categories", http.StatusInternalServerError)
+        return
+    }
+	responseData := map[string]interface{}{
+		"Categories" : categories,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(responseData)
 }

@@ -18,10 +18,11 @@ func main(){
 	http.HandleFunc("/register", handlers.RegisterHandler )
 	http.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
 		handlers.DestroySession(w,r)
-		http.Redirect(w,r,"/",http.StatusSeeOther)
+		http.Redirect(w,r,"/login",http.StatusSeeOther)
 	})
 	http.HandleFunc("/Direct", handlers.MessagesHandler)
 	http.HandleFunc("/Create", handlers.CreatePostHandler)
+	http.HandleFunc("/api/create-data", handlers.CreateDataHandler)
 	
 
 
