@@ -3,26 +3,26 @@ package database
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
-
 	_ "github.com/mattn/go-sqlite3"
-	// "golang.org/x/crypto/ssh/agent"
 )
 
 var db *sql.DB
+var ErrUserExists = errors.New("user already exists")
 
 type User struct {
 	ID        int
 	Username  string
 	FirstName string
 	LastName  string
-	Age       int
-	gender    string
+	Age       string
+	Gender    string
 	Email     string
 	Password  string
 }
@@ -166,9 +166,40 @@ func GetUserIDFromSession(cookie *http.Cookie, userID int, expiresAt time.Time) 
 func GetUsernameFromUserID(userID int) (*User, error) {
 	var user User
 	err := db.QueryRow(" username , first_name , last_name , age , gender , email , password FROM users WHERE id = ?", userID).
-		Scan(&user.Username, &user.FirstName, &user.LastName, &user.Age, &user.gender, &user.Email, &user.Password)
+		Scan(&user.Username, &user.FirstName, &user.LastName, &user.Age, &user.Gender, &user.Email, &user.Password)
 	if err != nil {
 		return nil, errors.New("user not found")
 	}
-	return &user,nil
+	return &user, nil
+}
+
+func CreateUser(user User) error {
+	stmt, err := db.Prepare("INSERT INTO users (username , first_name,last_name , age,gender ,email , password) VALUES (?,?,?,?,?,?,?)")
+	if err != nil {
+		log.Printf("Failed to prepare statement: %v", err)
+		return fmt.Errorf("failed to prepare statement: %w", err)
+	}
+	defer stmt.Close()
+
+	_,err = stmt.Exec(user.Username,user.FirstName,user.LastName,user.Age,user.Gender,user.Email,user.Password)
+	if err != nil {
+		if err.Error() == "constraint failed: UNIQUE constraint failed: users.username (2067)" {
+			return ErrUserExists
+		}else if err.Error() == "constraint failed: UNIQUE constraint failed: users.email (2067)"{
+			return ErrUserExists
+		}
+		log.Printf("Failed to execute statement: %v", err)
+		return fmt.Errorf("failed to execute statement: %w", err)
+	}
+	return nil
+}
+
+func GetUserByEmail(email string) (*User, error) {
+	var user User
+	err := db.QueryRow("SELECT id FROM users WHERE email = ?", email).
+		Scan(&user.ID)
+	if err != nil {
+		return nil, errors.New("user not found")
+	}
+	return &user, nil
 }
