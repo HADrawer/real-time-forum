@@ -233,6 +233,8 @@ func GetAllCategories() ([]Category, error) {
 	return categories, nil
 }
 
+
+//Posts Section
 func CreatePost(userID int , title string, content string, categories string) error {
 	stmt , err := db.Prepare("INSERT INTO posts (user_id , title , content , author , category) VALUES (?,?,?,?,?)")
 	if err != nil {
@@ -244,4 +246,61 @@ func CreatePost(userID int , title string, content string, categories string) er
 	}
 	_ , err = stmt.Exec(userID, title,content,user.Username, categories)
 	return err
+}
+func GetAllPosts() ([]Post, error) {
+	var posts []Post
+	rows , err := db.Query("SELECT id, user_id,title,content, author,category FROM posts")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var post Post
+		if err := rows.Scan(&post.ID,&post.UserID,&post.Title,&post.Content,&post.Author,&post.Category); err != nil {
+			return nil,err
+		}
+		posts = append(posts, post)
+	}
+	return posts , nil
+}
+func GetPostByID(postID int) (*Post,error) {
+	var post Post
+	err := db.QueryRow("SELECT id, user_id,title,content, author,category FROM posts").
+		Scan(&post.ID,&post.UserID,&post.Title,&post.Content,&post.Author,&post.Category)
+	if err != nil {
+		return nil , errors.New("post not found")
+	}
+	return &post, nil
+}
+
+//Comment Section
+func CreateComment(userID int, postID, comment string) error {
+	stmt, err := db.Prepare("INSERT INTO comments (user_id , post_id, content, author) VALUES(?,?,?,?)")
+	if err != nil {
+		return err
+	}
+	user, _ := GetUsernameFromUserID(userID)
+	_, err = stmt.Exec( user.ID,postID, comment, user.Username)
+	return err
+}
+
+func GetCommentsByPostID(postID int) ([]Comment, error) {
+	var comments []Comment
+	rows, err := db.Query("SELECT id, user_id, content , author , created_at FROM comments WHERE post_id = ?", postID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var comment Comment
+		var createdAt time.Time
+		if err := rows.Scan(&comment.ID, &comment.User_ID, &comment.Content, &comment.Author, &createdAt); err != nil {
+			return nil, err
+		}
+		comment.Created_at = createdAt.Format("2006-01-02 15:04:05")
+		comments = append(comments, comment)
+	}
+	return comments, nil
 }
