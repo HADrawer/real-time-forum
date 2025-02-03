@@ -20,7 +20,7 @@ function handleNavigation() {
     let path = window.location.pathname;
 
     if (path === "/") {
-        fetchAndRenderHomePage()
+        
     }else if (path === "/register"){
         fetchAndRenderRegister()
     }else if (path === "/login"){

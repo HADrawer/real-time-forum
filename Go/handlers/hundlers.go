@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	database "Real-Time/Go/DB"
+	 "Real-Time/Go/DB"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -44,6 +44,29 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	pageData := make(map[string]interface{})
 
 	pageData["IsLoggedIn"] = isLoggedIn
+
+	posts, err := database.GetAllPosts()
+	if err != nil {
+		http.Error(w, "Unable to load posts", http.StatusInternalServerError)
+		// RenderTemplate(w, "500", nil)   // 500
+		return
+	}
+	isExist := true
+	if posts == nil {
+		isExist = false
+	}
+	var postDetails []map[string]interface{}
+	for _, post := range posts {
+		postDetail := map[string]interface{}{
+			"Id":         post.ID,
+			"Author":     post.Author,
+			"Title":      post.Title,
+		}
+		postDetails = append(postDetails, postDetail)
+	}
+	pageData["isExist"] = isExist
+	pageData["Posts"] = postDetails
+
 
 	RenderTemplate(w, pageData)
 }
