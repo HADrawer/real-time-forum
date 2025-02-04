@@ -22,9 +22,14 @@ func main(){
 	})
 	http.HandleFunc("/Direct", handlers.MessagesHandler)
 	http.HandleFunc("/Create", handlers.CreatePostHandler)
+	http.HandleFunc("/Post", handlers.ViewPostHandler)
+
+
+
+
 	http.HandleFunc("/api/create-data", handlers.CreateDataHandler)
 	http.HandleFunc("/api/home-data", handlers.HomeDataHandler)
-
+	http.HandleFunc("/api/post-data", handlers.PostDataHandler)
 
 
 

@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	 "Real-Time/Go/DB"
+	database "Real-Time/Go/DB"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"golang.org/x/crypto/bcrypt"
@@ -58,32 +59,30 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	var postDetails []map[string]interface{}
 	for _, post := range posts {
 		postDetail := map[string]interface{}{
-			"Id":         post.ID,
-			"Author":     post.Author,
-			"Title":      post.Title,
+			"Id":     post.ID,
+			"Author": post.Author,
+			"Title":  post.Title,
 		}
 		postDetails = append(postDetails, postDetail)
 	}
 	pageData["isExist"] = isExist
 	pageData["Posts"] = postDetails
 
-
 	RenderTemplate(w, pageData)
 }
-func HomeDataHandler(w http.ResponseWriter, r *http.Request){
+func HomeDataHandler(w http.ResponseWriter, r *http.Request) {
 
 	posts, err := database.GetAllPosts()
-    if err != nil {
-        http.Error(w, "Unable to load posts", http.StatusInternalServerError)
-        return
-    }
+	if err != nil {
+		http.Error(w, "Unable to load posts", http.StatusInternalServerError)
+		return
+	}
 	responseData := map[string]interface{}{
-        "Posts":      posts,
-    }
+		"Posts": posts,
+	}
 
-    w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(responseData)
-
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(responseData)
 
 }
 
@@ -201,18 +200,18 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.Method == http.MethodGet {
-		Categories, _ := database.GetAllCategories()
+		// Categories, _ := database.GetAllCategories()
 		pageData := make(map[string]interface{})
-		var postDetails []map[string]interface{}
-		for _, Category := range Categories {
-			postDetail := map[string]interface{}{
-				"Category": Category.Name,
-			}
-			postDetails = append(postDetails, postDetail)
-		}
+		// var postDetails []map[string]interface{}
+		// for _, Category := range Categories {
+		// 	postDetail := map[string]interface{}{
+		// 		"Category": Category.Name,
+		// 	}
+		// 	postDetails = append(postDetails, postDetail)
+		// }
 		pageData["IsLoggedIn"] = isLoggedIn
-		pageData["Categories"] = postDetails
-		
+		// pageData["Categories"] = postDetails
+
 		RenderTemplate(w, pageData)
 		return
 	}
@@ -236,16 +235,112 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }
-func CreateDataHandler(w http.ResponseWriter , r *http.Request) {
+func CreateDataHandler(w http.ResponseWriter, r *http.Request) {
 	categories, err := database.GetAllCategories()
-    if err != nil {
-        http.Error(w, "Unable to load categories", http.StatusInternalServerError)
-        return
-    }
+	if err != nil {
+		http.Error(w, "Unable to load categories", http.StatusInternalServerError)
+		return
+	}
 	responseData := map[string]interface{}{
-		"Categories" : categories,
+		"Categories": categories,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(responseData)
+}
+
+func ViewPostHandler(w http.ResponseWriter, r *http.Request) {
+	_, isLoggedIn := GetUserIDFromSession(r)
+	isExist := true
+	str_id := r.URL.Query().Get("id")
+	id, err := strconv.Atoi(str_id)
+	
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	// Retrieve post by ID
+	
+	post, err0 := database.GetPostByID(id)
+	comments, err := database.GetCommentsByPostID(id)
+	if err0 != nil {
+		w.WriteHeader(http.StatusNotFound) // 404
+		// RenderTemplate(w, "404", nil)      // Render custom 404 page if post not found
+		return
+	}
+
+	// Check for errors in retrieving comments
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError) // 500
+		// RenderTemplate(w, "500", nil)                 // Render custom 500 page for internal error
+		return
+	}
+
+	// Populate comments for the template
+	var CommentDetails []map[string]interface{}
+	for _, comment := range comments {
+
+		
+
+		commentDetail := map[string]interface{}{
+			"PostID":        id,
+			"id":            comment.ID,
+			"Author":        comment.Author,
+			"comment":       comment.Content,
+			"created_at":    comment.Created_at,
+			"CommentUserID": comment.User_ID,
+			"IsLoggedIn":    isLoggedIn,
+			
+		}
+		CommentDetails = append(CommentDetails, commentDetail)
+	}
+
+	// Prepare page data with post details and comments
+	pageData := make(map[string]interface{})
+	pageData["id"] = id
+	pageData["Author"] = post.Author
+	pageData["Title"] = post.Title
+	pageData["Content"] = post.Content
+	pageData["IsLoggedIn"] = isLoggedIn
+	pageData["isExist"] = isExist
+	pageData["Comments"] = CommentDetails
+	
+
+	// Render the view post template
+	RenderTemplate(w,  pageData)
+
+}
+
+func  PostDataHandler(w http.ResponseWriter, r *http.Request ) {
+	str_id := r.URL.Query().Get("id")
+	id, err := strconv.Atoi(str_id)
+	print(id)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	
+	post, err0 := database.GetPostByID(id)
+	comments, err := database.GetCommentsByPostID(id)
+	if err0 != nil {
+		w.WriteHeader(http.StatusNotFound) // 404
+		// RenderTemplate(w, "404", nil)      // Render custom 404 page if post not found
+		return
+	}
+
+	// Check for errors in retrieving comments
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError) // 500
+		// RenderTemplate(w, "500", nil)                 // Render custom 500 page for internal error
+		return
+	}
+	
+	responseData := map[string]interface{}{
+		"Post": post,
+		"Comments": comments,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(responseData)
+
 }
