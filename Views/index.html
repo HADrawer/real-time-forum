@@ -33,31 +33,6 @@
         
         <main id="content">
                 <!-- Dynamic contant-->
-            <div class="content-wrapper">
-                <div class="posts">
-                    {{if .IsLoggedIn}}
-                    {{if .isExist}}
-                        {{range .Posts}}
-                            <div class="content">
-                                <div class="infoStupid">
-                                    <a href="/Post?id={{.Id}}"><h3>{{.Title}}</h3></a>
-                                    <p>Posted By {{.Author}}</p>
-                                    <h5>{{.created_at}}</h5>
-                                </div>
-                            </div>
-                        {{end}}
-                    {{else}}
-                        <div class="content">
-                            <div class="info">
-                                <h1>{{.NoPosts}}</h1>
-                            </div>
-                        </div>
-                    {{end}}
-                    {{end}}
-                </div>
-            </div>
-
-
         </main>
         
         <footer>

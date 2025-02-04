@@ -20,7 +20,7 @@ function handleNavigation() {
     let path = window.location.pathname;
 
     if (path === "/") {
-        
+        fetchAndRenderHomePage()
     }else if (path === "/register"){
         fetchAndRenderRegister()
     }else if (path === "/login"){
@@ -36,10 +36,39 @@ function handleNavigation() {
 }
 
 function fetchAndRenderHomePage(){
-    document.getElementById('content').innerHTML = ` 
-    `;
-    history.pushState({},"Home","/")
-}
+    fetch("/api/home-data")
+        .then(response => response.json())
+        .then(data =>{
+            const content = document.getElementById("content");
+            if (content){
+
+                content.innerHTML = ` 
+                 <div class="content-wrapper">
+                            <div class="posts">
+                            ${data.Posts.length > 0 ? data.Posts.map(post =>
+                                `
+                                <div class="content">
+                                    <div class="infoStupid">
+                                        <a href="/Post?id=${post.ID}"><h3>${post.Title}</h3></a>
+                                        <p>Posted By ${post.Author}</p>
+                                         <h5>${post.created_at}</h5>
+                                    </div>
+                                </div>
+                            `).join("") : `
+                                <div class="content">
+                                    <div class="info">
+                                        <h1>No posts found.</h1>
+                                    </div>
+                                </div>
+                                `}      
+                            </div>
+                        </div>
+                `;
+            }
+        })
+        .catch(error => console.error("Error fetching home page data:", error));
+        
+    }
 
 
 function fetchAndRenderRegister(){
@@ -129,6 +158,7 @@ function fetchAndRenderDirect(){
     `;
     history.pushState({},"direct","/Direct")
 }
+
 function fetchAndRenderCreate(){
     fetch("/api/create-data")
         .then(response => response.json())

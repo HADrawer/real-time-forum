@@ -23,7 +23,8 @@ func main(){
 	http.HandleFunc("/Direct", handlers.MessagesHandler)
 	http.HandleFunc("/Create", handlers.CreatePostHandler)
 	http.HandleFunc("/api/create-data", handlers.CreateDataHandler)
-	
+	http.HandleFunc("/api/home-data", handlers.HomeDataHandler)
+
 
 
 

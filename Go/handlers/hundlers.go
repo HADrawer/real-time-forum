@@ -70,6 +70,22 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 
 	RenderTemplate(w, pageData)
 }
+func HomeDataHandler(w http.ResponseWriter, r *http.Request){
+
+	posts, err := database.GetAllPosts()
+    if err != nil {
+        http.Error(w, "Unable to load posts", http.StatusInternalServerError)
+        return
+    }
+	responseData := map[string]interface{}{
+        "Posts":      posts,
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(responseData)
+
+
+}
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	_, isLoggedIn := GetUserIDFromSession(r)
