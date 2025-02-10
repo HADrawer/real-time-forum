@@ -29,7 +29,7 @@ function handleNavigation() {
         fetchAndRenderDirect()
     }else if (path === "/Create"){
         fetchAndRenderCreate()
-    }else if (path.startsWith("/Post")){
+    }else if (path === "/Post"){
         fetchAndRenderPost()
     }else {
         renderNotFoundPage();
@@ -291,3 +291,5 @@ document.addEventListener("DOMContentLoaded", function () {
         togglePasswordVisibility(passwordConfirm,togglePasswordConfirm)
     });
 });
+
+

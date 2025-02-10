@@ -23,7 +23,18 @@
                 <ul>
                     <li><a href="/Create"> Create Post</a></li>
                     <li><a href="/Direct">messages</a></li>
-                    <button class="Headerbutton"><a href="/logout">Log out</a></button>
+                    <button class="Headerbutton" id="logoutBtn">Log out</button>
+                        <script>
+                            document.getElementById("logoutBtn").addEventListener("click", () => {
+                                 fetch("/logout", { method: "POST", credentials: "include" }) 
+                                 .then(response => {
+                                if (response.redirected) {
+                                    window.location.href = response.url; // Redirect to homepage
+                                }
+                              })
+                            .catch(error => console.error("Logout failed:", error));
+                        });
+                        </script>
                 </ul>
                 </nav>
                 <!-- <h1 class="UserName">hashem</h1> -->
