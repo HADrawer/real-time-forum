@@ -29,7 +29,7 @@ function handleNavigation() {
         fetchAndRenderDirect()
     }else if (path === "/Create"){
         fetchAndRenderCreate()
-    }else if (path === "/Post"){
+    }else if (path.startsWith("/Post")){
         fetchAndRenderPost()
     }else {
         renderNotFoundPage();
@@ -199,69 +199,63 @@ function fetchAndRenderCreate(){
 function fetchAndRenderPost(){
     const urlParams = new URLSearchParams(window.location.search);
     const postId = urlParams.get('id');
-    console.log("Extracted postId:", postId); 
+    if (!postId) {
+        console.error("Post ID not found.");
+        return; 
+    }
     
-    fetch(`/api/post-data?id=${postId}`)
+    fetch(`/api/post-data`)
     .then(response => response.json())
     .then(data => {
         const content = document.getElementById("content");
         if (content){
 
-        content.innerHTML = `
-        <div class="info-post">
-                    ${data.Post.map (post => 
-                        `
-                        <div class="comment-box">
+            // Filter the post by postId
+            if (data.Posts && data.Posts.length > 0) {
+                const post = data.Posts.find(post => parseInt(post.ID) === parseInt(postId)); 
+            
+
+            if (post) {
+                content.innerHTML = `
+                <div class="info-post">
+                    <div class="comment-box">
                         <h1>${post.Title}</h1>
-                    
+
                         <h3>Content:</h3>
-                        <p onclick="this.classList.toggle('expanded');"> ${post.Content}</p>
-                    
+                        <p onclick="this.classList.toggle('expanded');">${post.Content}</p>
+
                         <p>Author: ${post.Author}</p>
-    
-                        
-                        </div>
-                     
-                        
-                        <h2>Add a Comment</h2>
-                        <form action="/Comment" method="post" onsubmit="return validateForm()">
-                            <input name="PostID" value="${post.id}" type="hidden">
-                            <textarea name="PostComment" id="Comment" placeholder="Write Your Comment here" maxlength="250" required></textarea><br>
-                            <div id="CommentError" style="color:red; display:none;"></div>
-    
-                            <input type="submit" class="button-primary" value="Add Comment">
-                        </form>
-                        `
-                    ).join("")}
-                
-                
+                    </div>
+
+                    <h2>Add a Comment</h2>
+                    <form action="/Comment" method="post" onsubmit="return validateForm()">
+                        <input name="PostID" value="${post.id}" type="hidden">
+                        <textarea name="PostComment" id="Comment" placeholder="Write Your Comment here" maxlength="250" required></textarea><br>
+                        <div id="CommentError" style="color:red; display:none;"></div>
+
+                        <input type="submit" class="button-primary" value="Add Comment">
+                    </form>
+
                     <hr class="divider">
 
                     <h2>Comments</h2>
                     <ul>
-                     ${data.Comments.length > 0 ? data.Comments.map(comment => 
-                        `
-                            <div class="Post-box">
-                                <h3>${comment.Author}</h3>
-                                <div class="comment-content" onclick="this.classList.toggle('expanded');">
-                                    <p class="comment-text">${comment.Content}</p>
-                                </div>
-                                <h6>${comment.Created_at}</h6>
-                            </div>
-                        `).join("") :
-                        `
-                        <p>No comments yet.</p>
-                        `
-                    }
+                      
+                        }
                     </ul>
-                    
-                    
                 </div>
-            </div>
-        `;
+                `;
+            } else {
+                content.innerHTML = `<p>Post not found.</p>`;  // Handle if the post ID doesn't match any post
+            }
+        } else {
+            content.innerHTML = `<p>No posts available.</p>`;
+
+            
+        }
         }
     })
-    .catch(error => console.error("Error fetching post page data:", error))
+    .catch(error => console.error("Error fetching post page data:", error));
     
 }
 
@@ -291,5 +285,3 @@ document.addEventListener("DOMContentLoaded", function () {
         togglePasswordVisibility(passwordConfirm,togglePasswordConfirm)
     });
 });
-
-

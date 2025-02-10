@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
+	// "strconv"
 	"strings"
 
 	"golang.org/x/crypto/bcrypt"
@@ -252,58 +252,13 @@ func CreateDataHandler(w http.ResponseWriter, r *http.Request) {
 func ViewPostHandler(w http.ResponseWriter, r *http.Request) {
 	_, isLoggedIn := GetUserIDFromSession(r)
 	isExist := true
-	str_id := r.URL.Query().Get("id")
-	id, err := strconv.Atoi(str_id)
 	
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
-	// Retrieve post by ID
-	
-	post, err0 := database.GetPostByID(id)
-	comments, err := database.GetCommentsByPostID(id)
-	if err0 != nil {
-		w.WriteHeader(http.StatusNotFound) // 404
-		// RenderTemplate(w, "404", nil)      // Render custom 404 page if post not found
-		return
-	}
-
-	// Check for errors in retrieving comments
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError) // 500
-		// RenderTemplate(w, "500", nil)                 // Render custom 500 page for internal error
-		return
-	}
-
-	// Populate comments for the template
-	var CommentDetails []map[string]interface{}
-	for _, comment := range comments {
-
-		
-
-		commentDetail := map[string]interface{}{
-			"PostID":        id,
-			"id":            comment.ID,
-			"Author":        comment.Author,
-			"comment":       comment.Content,
-			"created_at":    comment.Created_at,
-			"CommentUserID": comment.User_ID,
-			"IsLoggedIn":    isLoggedIn,
-			
-		}
-		CommentDetails = append(CommentDetails, commentDetail)
-	}
 
 	// Prepare page data with post details and comments
 	pageData := make(map[string]interface{})
-	pageData["id"] = id
-	pageData["Author"] = post.Author
-	pageData["Title"] = post.Title
-	pageData["Content"] = post.Content
+	
 	pageData["IsLoggedIn"] = isLoggedIn
 	pageData["isExist"] = isExist
-	pageData["Comments"] = CommentDetails
 	
 
 	// Render the view post template
@@ -312,32 +267,13 @@ func ViewPostHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func  PostDataHandler(w http.ResponseWriter, r *http.Request ) {
-	str_id := r.URL.Query().Get("id")
-	id, err := strconv.Atoi(str_id)
-	print(id)
+	posts, err := database.GetAllPosts()
 	if err != nil {
-		fmt.Println("Error:", err)
+		http.Error(w, "Unable to load posts", http.StatusInternalServerError)
 		return
 	}
-	
-	post, err0 := database.GetPostByID(id)
-	comments, err := database.GetCommentsByPostID(id)
-	if err0 != nil {
-		w.WriteHeader(http.StatusNotFound) // 404
-		// RenderTemplate(w, "404", nil)      // Render custom 404 page if post not found
-		return
-	}
-
-	// Check for errors in retrieving comments
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError) // 500
-		// RenderTemplate(w, "500", nil)                 // Render custom 500 page for internal error
-		return
-	}
-	
 	responseData := map[string]interface{}{
-		"Post": post,
-		"Comments": comments,
+		"Posts": posts,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
