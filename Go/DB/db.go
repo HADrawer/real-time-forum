@@ -265,8 +265,8 @@ func GetAllPosts() ([]Post, error) {
 }
 func GetPostByID(postID int) (*Post,error) {
 	var post Post
-	err := db.QueryRow("SELECT id, user_id,title,content, author,category FROM posts").
-		Scan(&post.ID,&post.UserID,&post.Title,&post.Content,&post.Author,&post.Category)
+	err := db.QueryRow("SELECT id, user_id,title,content, author FROM posts WHERE id = ?", postID).
+		Scan(&post.ID,&post.UserID,&post.Title,&post.Content,&post.Author)
 	if err != nil {
 		return nil , errors.New("post not found")
 	}

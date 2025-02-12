@@ -266,17 +266,79 @@ func ViewPostHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+type PostID struct {
+	ID  int `json:"id"`
+}
+
 func  PostDataHandler(w http.ResponseWriter, r *http.Request ) {
-	posts, err := database.GetAllPosts()
+	
+	w.Header().Set("Content-Type", "application/json")
+
+	
+
+	// Declare a variable to store the decoded data
+	var id PostID
+
+	// Decode the incoming JSON data into the struct
+	err := json.NewDecoder(r.Body).Decode(&id)
+	if err != nil {
+		http.Error(w, "Error decoding JSON", http.StatusBadRequest)
+		return
+	}
+
+	// Print the decoded data
+	fmt.Printf("Received Data: %+v\n", id)
+
+	post, err := database.GetPostByID(id.ID)
 	if err != nil {
 		http.Error(w, "Unable to load posts", http.StatusInternalServerError)
 		return
 	}
+	comments,err := database.GetCommentsByPostID(id.ID)
+	if err != nil {
+		fmt.Print(err.Error())
+		// http.Error(w, "Unable to load Comments", http.StatusInternalServerError)
+		return
+	}
 	responseData := map[string]interface{}{
-		"Posts": posts,
+		"Post": post,
+		"Comments":comments,
+	}
+	json.NewEncoder(w).Encode(responseData)
+
+
+}
+
+
+
+
+
+func CommentHandler(w http.ResponseWriter, r *http.Request) {
+	userID, _ := GetUserIDFromSession(r)
+
+	// Extract form values
+	postId := r.FormValue("PostID")
+	comment := r.FormValue("PostComment")
+
+	// Check if required fields are present
+	if postId == "" || comment == "" {
+		http.Error(w, "Bad request: Missing PostID or Comment", http.StatusBadRequest) // 400
+		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(responseData)
+	// Attempt to create comment
+	err := database.CreateComment(userID, postId, comment)
+	if err != nil {
+		http.Error(w, "Internal server error 500", http.StatusInternalServerError) // 500
+		RenderTemplate(w, nil)  
+		return
+	}
+
+	// Redirect to the post page after successful comment creation
+	http.Redirect(w, r, "/Post?id="+postId, http.StatusFound)
+}
+
+
+func CommentDataHandler(w http.ResponseWriter, r *http.Request) {
 
 }

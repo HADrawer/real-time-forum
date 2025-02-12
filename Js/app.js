@@ -196,40 +196,57 @@ function fetchAndRenderCreate(){
 
 }
 
-function fetchAndRenderPost(){
+async function fetchAndRenderPost(){
     const urlParams = new URLSearchParams(window.location.search);
     const postId = urlParams.get('id');
     if (!postId) {
         console.error("Post ID not found.");
         return; 
     }
-    
-    fetch(`/api/post-data`)
-    .then(response => response.json())
-    .then(data => {
+    const postIdInt = parseInt(postId, 10);  // The second parameter (10) indicates base-10
+
+    if (isNaN(postIdInt)) {
+        console.error("Post ID is not a valid integer.");
+        return;
+    }
+
+    const data = {
+        id: postIdInt,
+    };
+      
+      // Sending JSON data via POST request
+     const response = await fetch('/api/post-data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)  // Convert JavaScript object to JSON string
+      })
+
+      if (response.ok){
+        const data = await response.json();
+      
+
         const content = document.getElementById("content");
         if (content){
 
             // Filter the post by postId
-            if (data.Posts && data.Posts.length > 0) {
-                const post = data.Posts.find(post => parseInt(post.ID) === parseInt(postId)); 
-            
-
-            if (post) {
+            if (data.Post) {
+               
                 content.innerHTML = `
                 <div class="info-post">
                     <div class="comment-box">
-                        <h1>${post.Title}</h1>
+                        <h1>${data.Post.Title}</h1>
 
                         <h3>Content:</h3>
-                        <p onclick="this.classList.toggle('expanded');">${post.Content}</p>
+                        <p onclick="this.classList.toggle('expanded');">${data.Post.Content}</p>
 
-                        <p>Author: ${post.Author}</p>
+                        <p>Author: ${data.Post.Author}</p>
                     </div>
 
                     <h2>Add a Comment</h2>
                     <form action="/Comment" method="post" onsubmit="return validateForm()">
-                        <input name="PostID" value="${post.id}" type="hidden">
+                        <input name="PostID" value="${data.Post.ID}" type="hidden">
                         <textarea name="PostComment" id="Comment" placeholder="Write Your Comment here" maxlength="250" required></textarea><br>
                         <div id="CommentError" style="color:red; display:none;"></div>
 
@@ -240,7 +257,19 @@ function fetchAndRenderPost(){
 
                     <h2>Comments</h2>
                     <ul>
-                      
+                       ${data.Comments &&  data.Comments.length > 0 ? data.Comments.map(comment => 
+                        `
+                            <div class="Post-box">
+                                <h3>${comment.Author}</h3>
+                                <div class="comment-content" onclick="this.classList.toggle('expanded');">
+                                    <p class="comment-text">${comment.Content}</p>
+                                </div>
+                                <h6>${comment.Created_at}</h6>
+                            </div>
+                        `).join("") :
+                        `
+                        <p>No comments yet.</p>
+                        `
                         }
                     </ul>
                 </div>
@@ -248,15 +277,11 @@ function fetchAndRenderPost(){
             } else {
                 content.innerHTML = `<p>Post not found.</p>`;  // Handle if the post ID doesn't match any post
             }
-        } else {
-            content.innerHTML = `<p>No posts available.</p>`;
-
-            
+        
         }
-        }
-    })
-    .catch(error => console.error("Error fetching post page data:", error));
-    
+      }else{
+        console.log("kkkk")
+      }
 }
 
 
