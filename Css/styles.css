@@ -73,7 +73,7 @@ nav ul li a:hover {
     width:90px ;
     cursor: pointer;
 }
-Headerbutton a{
+.Headerbutton a{
     color: black;
     font-weight: bold;
     font-size: 15px;
@@ -460,3 +460,37 @@ footer p {
   .comment-content {
     margin-bottom: 20px; /* Adds space between comments */
   }
+
+
+
+
+
+
+  /* ------------------------ Messages Styles -------------------------- */
+
+.sidebar {
+    position: fixed;
+    left: 0;
+    height: 100%;
+    width: 300px;
+    padding: 10px 14px;
+    
+}
+
+.sidebar .MessageName h2 {
+    width: 40px;
+    
+}
+
+.sidebar header {
+    align-items: center;
+}
+.Users {
+    background-color: #A7E6FF ;
+    border: none;
+    border-radius: 10px;
+    padding: 10px;
+    width:100% ;
+    cursor: pointer;
+    margin-bottom: 10px;
+}

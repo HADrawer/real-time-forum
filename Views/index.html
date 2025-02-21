@@ -44,6 +44,24 @@
         
         <main id="content">
                 <!-- Dynamic contant-->
+
+                <div>
+                    <nav class="sidebar">
+                        <header>
+                            <div class="MessageName">
+                                <span class="msg">
+                                    <h2>Direct</h2>
+                                </span>
+                            </div>
+                            {{range .Users}}
+                            <div class="Users">
+                                <p><a >{{.Username}}</a></p>
+                            </div>
+                            {{end}}
+                        </header>
+                    </nav>
+                    <div></div>
+                </div>
         </main>
         
         <footer>

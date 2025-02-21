@@ -25,14 +25,10 @@ function handleNavigation() {
         fetchAndRenderRegister()
     }else if (path === "/login"){
         fetchAndRenderLogin()
-    }else if (path === "/Direct"){
-        fetchAndRenderDirect()
     }else if (path === "/Create"){
         fetchAndRenderCreate()
     }else if (path.startsWith("/Post")){
         fetchAndRenderPost()
-    }else {
-        renderNotFoundPage();
     }
 
 }

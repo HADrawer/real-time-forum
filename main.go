@@ -20,7 +20,7 @@ func main(){
 		handlers.DestroySession(w,r)
 		http.Redirect(w,r,"/login",http.StatusSeeOther)
 	})
-	http.HandleFunc("/Direct", handlers.MessagesHandler)
+	// http.HandleFunc("/Direct", handlers.MessagesHandler)
 	http.HandleFunc("/Create", handlers.CreatePostHandler)
 	http.HandleFunc("/Post", handlers.ViewPostHandler)
     http.HandleFunc("/Comment", handlers.CommentHandler)
@@ -31,7 +31,7 @@ func main(){
 	http.HandleFunc("/api/create-data", handlers.CreateDataHandler)
 	http.HandleFunc("/api/home-data", handlers.HomeDataHandler)
 	http.HandleFunc("/api/post-data", handlers.PostDataHandler)
-	http.HandleFunc("/api/comments", handlers.CommentDataHandler)
+	http.HandleFunc("/Direct", handlers.DirectHandler)
 
 
 	log.Print("Server is running on http://localhost:8080")

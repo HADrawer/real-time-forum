@@ -252,7 +252,14 @@ func CreateDataHandler(w http.ResponseWriter, r *http.Request) {
 func ViewPostHandler(w http.ResponseWriter, r *http.Request) {
 	_, isLoggedIn := GetUserIDFromSession(r)
 	isExist := true
-	
+	if !isLoggedIn {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		fmt.Fprintf(w, "ParseForm() err: %v", err)
+		return
+	}
 
 	// Prepare page data with post details and comments
 	pageData := make(map[string]interface{})
@@ -339,6 +346,37 @@ func CommentHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 
-func CommentDataHandler(w http.ResponseWriter, r *http.Request) {
+func DirectHandler(w http.ResponseWriter, r *http.Request) {
+	_, isLoggedIn := GetUserIDFromSession(r)
+	if !isLoggedIn {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+	}
+	pageData := make(map[string]interface{})
 
+	pageData["IsLoggedIn"] = isLoggedIn
+
+	users, err := database.GetAllUsers()
+	if err != nil {
+		http.Error(w, "Unable to load posts", http.StatusInternalServerError)
+		// RenderTemplate(w, "500", nil)   // 500
+		return
+	}
+	isExist := true
+	if users == nil {
+		isExist = false
+	}
+	var usersDetails []map[string]interface{}
+	for _, user := range users {
+		postDetail := map[string]interface{}{
+			"Id":     user.ID,
+			"Username": user.Username,
+
+		}
+		usersDetails = append(usersDetails, postDetail)
+	}
+	pageData["isExist"] = isExist
+	pageData["Users"] = usersDetails
+
+	RenderTemplate(w, pageData)
 }
+

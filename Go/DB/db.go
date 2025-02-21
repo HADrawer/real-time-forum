@@ -303,3 +303,20 @@ func GetCommentsByPostID(postID int) ([]Comment, error) {
 	}
 	return comments, nil
 }
+func GetAllUsers() ([]User, error) {
+	var users []User
+	rows , err := db.Query("SELECT id, username FROM users")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var user User
+		if err := rows.Scan(&user.ID,&user.Username); err != nil {
+			return nil,err
+		}
+		users = append(users, user)
+	}
+	return users , nil
+}
