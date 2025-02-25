@@ -161,7 +161,7 @@ function fetchAndRenderDirect(){
                     </ul>
                 </div>
                             
-                <div class="chat-area">
+                <div class="chat-area" id="ChatArea">
                     <div class="chat-header">
                         Chat with <span id="chatWith"> </span>
                     </div>
@@ -183,15 +183,18 @@ function fetchAndRenderDirect(){
     const sendMessageButton = document.getElementById('sendMessage');
     const userList = document.getElementById('userList');
     const chatWith = document.getElementById('chatWith');
-
-    fetch('http://0.0.0.0:8080/users')
+    const chatVisible = document.getElementById('ChatArea');
+    chatVisible.classList.add('hidden');
+    fetch(`http://${window.location.hostname}:8080/users`)
         .then(response => response.json())
         .then(users => {
             users.forEach(user => {
+                
                 const userItem = document.createElement('li');
-                userItem.textContent = user.username;
+                userItem.textContent = user.Username;
                 userItem.onclick = () => {
-                    chatWith.textContent = user.username;
+                    chatWith.textContent = user.Username;
+                    chatVisible.classList.remove('hidden');
                 };
                 userList.appendChild(userItem);
             });
