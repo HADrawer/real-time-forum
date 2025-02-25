@@ -214,7 +214,7 @@ function fetchAndRenderDirect(){
                         //             };
 
         socket.onmessage = (event) => {
-                const msg =JSON.parse(event.data);
+                const msg = JSON.parse(event.data);
                 const messageDiv = document.createElement('div');
                 messageDiv.innerHTML = `<strong>${msg.username}:</strong> ${msg.message}`;
                 messagesContainer.appendChild(messageDiv);

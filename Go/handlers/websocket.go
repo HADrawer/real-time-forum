@@ -41,6 +41,20 @@ func HandleConnections(w http.ResponseWriter, r *http.Request) {
 		conn.Close()
 	}()
 
+	userID, loggedIn := GetUserIDFromSession(r)
+	if !loggedIn {
+		log.Println("User not logged in")
+		conn.Close()
+		return
+	}
+
+	user , err := database.GetUsernameFromUserID(userID)
+	if err != nil {
+		log.Println("Error fetching username:", err)
+		conn.Close()
+		return
+	}
+
 	var msg Message
 	err = conn.ReadJSON(&msg)
 	if err != nil {
@@ -48,8 +62,9 @@ func HandleConnections(w http.ResponseWriter, r *http.Request) {
 			return
 	}
 
-	clients[conn] = msg.Username
-	fmt.Println(msg.Username, "connected")
+	clients[conn] = user.Username
+	fmt.Println(user.Username, "connected")
+
 
 	for {
 		err := conn.ReadJSON(&msg)
@@ -58,7 +73,7 @@ func HandleConnections(w http.ResponseWriter, r *http.Request) {
 			delete(clients, conn)
 			break
 		}
-
+		msg.Username = user.Username
 		broadcast <- msg
 	}
 }
