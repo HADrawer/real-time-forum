@@ -16,6 +16,7 @@ document.addEventListener("DOMContentLoaded", function(){
 });
 
 
+
 function handleNavigation() {
     let path = window.location.pathname;
 
@@ -31,6 +32,8 @@ function handleNavigation() {
         fetchAndRenderDirect()
     }else if (path.startsWith("/Post")){
         fetchAndRenderPost()
+    }else {
+        renderNotFoundPage()
     }
 
 }
@@ -74,7 +77,7 @@ function fetchAndRenderRegister(){
     document.getElementById('content').innerHTML = ` 
             <div class="register-login">
                 
-                    <form action="/register" class="register-login-form" method="post">
+                    <form action="/register" class="register-login-form" method="post" onsubmit="return validateRegisterForm()">
                     <p class="title">Register</p>
                     <p class="message">Sign up here </p>
                     <div class="form-group">
@@ -120,13 +123,34 @@ function fetchAndRenderRegister(){
                 </form>
               
             </div>`;
+            const togglePasswordVisibility = (inputElement,ToggleElemet) => {
+                if(inputElement.type === "password") {
+                    inputElement.type = "text";
+                    ToggleElemet.innerHTML = `<i class="far fa-eye"></i>`;
+                }else {
+                     inputElement.type = "password";
+                    ToggleElemet.innerHTML = `<i class="far fa-eye-slash"></i>`;
+                }
+            }
+            const passwordInput = document.getElementById("password");
+            const togglePassword = document.getElementById("togglePassword");
+            const passwordConfirm = document.getElementById("passwordConfirm");
+            const togglePasswordConfirm = document.getElementById("togglePasswordConfirm");
+        
+            togglePassword.addEventListener("click", () => {
+                togglePasswordVisibility(passwordInput,togglePassword);
+            });
+            togglePasswordConfirm.addEventListener("click",() => {
+                togglePasswordVisibility(passwordConfirm,togglePasswordConfirm)
+            });
+
             history.pushState({},"Register","/register")
 }
 function fetchAndRenderLogin(){
     document.getElementById('content').innerHTML = ` 
             <div class="register-login">
                 
-                    <form action="/login" class="register-login-form" method="post">
+                    <form action="/login" class="register-login-form" method="post" onsubmit="return validateRegisterForm()">
                     <p class="title">Login</p>
                     <p class="message">login here </p>
                     
@@ -150,6 +174,27 @@ function fetchAndRenderLogin(){
                 </form>
               
             </div>`;
+
+            const togglePasswordVisibility = (inputElement,ToggleElemet) => {
+                if(inputElement.type === "password") {
+                    inputElement.type = "text";
+                    ToggleElemet.innerHTML = `<i class="far fa-eye"></i>`;
+                }else {
+                     inputElement.type = "password";
+                    ToggleElemet.innerHTML = `<i class="far fa-eye-slash"></i>`;
+                }
+            }
+            const passwordInput = document.getElementById("password");
+            const togglePassword = document.getElementById("togglePassword");
+           
+        
+            togglePassword.addEventListener("click", () => {
+                togglePasswordVisibility(passwordInput,togglePassword);
+            });
+            
+
+            
+
             history.pushState({},"Login","/login")
 }
 function fetchAndRenderDirect(){
@@ -213,14 +258,6 @@ function fetchAndRenderDirect(){
                         // socket.send(JSON.stringify(username)); // Send username to server
                         //             };
 
-        socket.onmessage = (event) => {
-                const msg = JSON.parse(event.data);
-                const messageDiv = document.createElement('div');
-                messageDiv.innerHTML = `<strong>${msg.username}:</strong> ${msg.message}`;
-                messagesContainer.appendChild(messageDiv);
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        };
-                    
         sendMessageButton.addEventListener('click', () => {
             const message = messageInput.value;
             if (message) {
@@ -232,6 +269,17 @@ function fetchAndRenderDirect(){
                 messageInput.value = '';
             }
         });
+        socket.onmessage = (event) => {
+                const msg = JSON.parse(event.data);
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('MessageContent');
+                messageDiv.innerHTML = `<h5><strong>${msg.username}:</strong> ${msg.message}</h5>`;
+                messagesContainer.appendChild(messageDiv);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                
+               
+            };      
+                    
 
         messageInput.addEventListener('keypress', (e)=> {
             if (e.key === 'Enter') {
@@ -368,27 +416,20 @@ async function fetchAndRenderPost(){
 
 
 function renderNotFoundPage(){
-    
-}
-document.addEventListener("DOMContentLoaded", function () {
-    const togglePasswordVisibility = (inputElement,ToggleElemet) => {
-        if(inputElement.type === "password") {
-            inputElement.type = "text";
-            toggleElemet.innerHTML = `<i class="far fa-eye"></i>`;
-        }else {
-             inputElement.type = "password";
-            toggleElemet.innerHTML = `<i class="far fa-eye-slash"></i>`;
-        }
-    }
-    const passwordInput = document.getElementById("password");
-    const togglePassword = document.getElementById("togglePassword");
-    const passwordConfirm = document.getElementById("passwordConfirm");
-    const togglePasswordConfirm = document.getElementById("togglePasswordConfirm");
+    document.getElementById('content').innerHTML = ` 
+   <h1>404 ERROR</h1> 
+`;
 
-    togglePassword.addEventListener("click", () => {
-        togglePasswordVisibility(passwordInput,togglePassword);
-    });
-    togglePasswordConfirm.addEventListener("click",() => {
-        togglePasswordVisibility(passwordConfirm,togglePasswordConfirm)
-    });
-});
+}
+function validateRegisterForm(){
+    const password = document.getElementById("password").value
+    const confirmPassword = document.getElementById("passwordConfirm").value
+    
+    if (password !== confirmPassword) {
+        alert("Passwords do not match!");
+        return false;
+    }
+    return true
+}
+
+
