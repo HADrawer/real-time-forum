@@ -38,7 +38,7 @@ func main() {
 	http.Handle("/Css/", http.StripPrefix("/Css/", http.FileServer(http.Dir("Css"))))
 	http.Handle("/Js/", http.StripPrefix("/Js/", http.FileServer(http.Dir("Js"))))
 
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := http.ListenAndServe("0.0.0.0:8080", nil); err != nil {
 		log.Fatal("Failed to start server: ", err)
 	}
 
