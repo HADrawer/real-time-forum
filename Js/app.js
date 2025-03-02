@@ -232,12 +232,16 @@ function fetchAndRenderDirect(){
     chatVisible.classList.add('hidden');
     fetch(`http://${window.location.hostname}:8080/users`)
         .then(response => response.json())
-        .then(users => {
+        .then(data => {
+
+            currentSenderid = data.sender_id;
+            const users = data.users;
             users.forEach(user => {
                 
                 const userItem = document.createElement('li');
                 userItem.textContent = user.Username;
                 userItem.onclick = () => {
+                    currentReceiverId = user.ID;
                     chatWith.textContent = user.Username;
                     chatVisible.classList.remove('hidden');
                 };
@@ -262,9 +266,18 @@ function fetchAndRenderDirect(){
             const message = messageInput.value;
             if (message) {
                 const msg = {
-                    username: 'You',
-                    message: message
+                    Username: 'You',
+                    Message: message,
+                    sender_id : currentSenderid,
+                    receiver_id : currentReceiverId
+    
                 };
+    //             ID         int    		`json:"id"`
+	// SenderID   int    		`json:"sender_id"`
+	// ReceiverID int    		`json:receiver_id`
+	// Username   string 		`json:"username"`
+	// Message    string 		`json:"message"`
+	// CreateTime time.Time	`json:"createdTime"`
                 socket.send(JSON.stringify(msg));
                 messageInput.value = '';
             }

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-
+	"time"
 	"github.com/gorilla/websocket"
 )
 
@@ -14,14 +14,16 @@ var clients = make(map[*websocket.Conn]string)
 var broadcast = make(chan Message)
 
 type Message struct {
-	Username string `json:"username"`
-	Message  string `json:"message"`
+	ID         int    		`json:"id"`
+	SenderID   int    		`json:"sender_id"`
+	ReceiverID int    		`json:"receiver_id"`
+	Username   string 		`json:"username"`
+	Message    string 		`json:"message"`
+	CreateTime time.Time	`json:"createdTime"`
 }
 type User struct {
-	ID        int    `json:"id"`
-	Username  string `json:"username"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"email"`
+	ID       int    `json:"id"`
+	Username string `json:"username"`
 }
 
 var upgrader = websocket.Upgrader{
@@ -47,8 +49,8 @@ func HandleConnections(w http.ResponseWriter, r *http.Request) {
 		conn.Close()
 		return
 	}
-
-	user , err := database.GetUsernameFromUserID(userID)
+	// println(len(clients))
+	user, err := database.GetUsernameFromUserID(userID)
 	if err != nil {
 		log.Println("Error fetching username:", err)
 		conn.Close()
@@ -58,21 +60,24 @@ func HandleConnections(w http.ResponseWriter, r *http.Request) {
 	var msg Message
 	err = conn.ReadJSON(&msg)
 	if err != nil {
-		log.Println("Error reading username:", err)	
-			return
+		log.Println("Error reading username:", err)
+		return
 	}
 
 	clients[conn] = user.Username
 	fmt.Println(user.Username, "connected")
 
-
 	for {
 		err := conn.ReadJSON(&msg)
 		if err != nil {
-            log.Println("Error reading message:", err)		
+			log.Println("Error reading message:", err)
 			delete(clients, conn)
 			break
 		}
+		println(msg.Username)
+		println(msg.ReceiverID)
+		println(msg.SenderID)
+		println(msg.Message)
 		msg.Username = user.Username
 		broadcast <- msg
 	}
@@ -100,9 +105,14 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unable to fetch users", http.StatusInternalServerError)
 		return
 	}
+	userID, _ := GetUserIDFromSession(r)
+	ALLUsers := map[string]interface{}{
+		"users": users,
+		"sender_id": userID,
+	}
 
 	// Send the list of users as a JSON response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(users)
+	json.NewEncoder(w).Encode(ALLUsers)
 }
