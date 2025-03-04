@@ -40,6 +40,7 @@ func HandleConnections(w http.ResponseWriter, r *http.Request) {
 	}
 	defer func() {
 		log.Println("Closing WebSocket connection")
+		delete(clients, conn)
 		conn.Close()
 	}()
 
@@ -70,8 +71,7 @@ func HandleConnections(w http.ResponseWriter, r *http.Request) {
 	for {
 		err := conn.ReadJSON(&msg)
 		if err != nil {
-			log.Println("Error reading message:", err)
-			delete(clients, conn)
+			
 			break
 		}
 		println(msg.Username)
