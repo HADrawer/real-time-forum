@@ -10,18 +10,19 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var clients = make(map[*websocket.Conn]string)
-var broadcast = make(chan Message)
+var clients = make(map[int]*websocket.Conn)
 
-type Message struct {
-	ID         int    		`json:"id"`
-	SenderID   int    		`json:"sender_id"`
-	ReceiverID int    		`json:"receiver_id"`
-	Username   string 		`json:"username"`
-	Message    string 		`json:"message"`
-	CreateTime time.Time	`json:"createdTime"`
+
+
+type MessageJson struct {
+	ID         int       `json:"id"`
+	SenderID   int       `json:"sender_id"`
+	ReceiverID int       `json:"receiver_id"`
+	Username   string    `json:"username"`
+	Message    string    `json:"message"`
+	CreateTime time.Time `json:"createdTime"`
 }
-type User struct {
+type UserJson struct {
 	ID       int    `json:"id"`
 	Username string `json:"username"`
 }
@@ -38,67 +39,78 @@ func HandleConnections(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
-	defer func() {
-		log.Println("Closing WebSocket connection")
-		delete(clients, conn)
-		conn.Close()
-	}()
-
-	
 	userID, loggedIn := GetUserIDFromSession(r)
 	if !loggedIn {
 		log.Println("User not logged in")
 		conn.Close()
 		return
 	}
-	// println(len(clients))
+
 	user, err := database.GetUsernameFromUserID(userID)
 	if err != nil {
 		log.Println("Error fetching username:", err)
 		conn.Close()
 		return
 	}
+	defer func() {
 
-	var msg Message
-	err = conn.ReadJSON(&msg)
-	if err != nil {
-		log.Println("Error reading username:", err)
-		return
-	}
+		log.Println("Closing WebSocket connection")
+		delete(clients, userID)
+		conn.Close()
 
-	clients[conn] = user.Username
+	}()
+	clients[userID] = conn
 	fmt.Println(user.Username, "connected")
 
 	for {
+		var msg MessageJson
 		err := conn.ReadJSON(&msg)
 		if err != nil {
-			
+			log.Println("Error Receiving message", err)
 			break
 		}
-		println(msg.Username)
-		println(msg.ReceiverID)
-		println(msg.SenderID)
-		println(msg.Message)
-		msg.Username = user.Username
-		broadcast <- msg
+		SendMessage(user.ID, msg.ReceiverID, user.Username, msg.Message)
 	}
 }
 
-func HandleMessages() {
-	for {
-		msg := <-broadcast
+func SendMessage(senderID int, receiverID int, username string, message string) {
+	msg := MessageJson{
+		Username: username,
+		SenderID:   senderID,
+		ReceiverID: receiverID,
+		Message:    message,
+		CreateTime: time.Now(),
+	}
 
-		for client := range clients {
-			err := client.WriteJSON(msg)
-			if err != nil {
-				log.Println(err)
-				client.Close()
-				delete(clients, client)
-			}
+	err := database.SaveMessage(msg.SenderID,msg.ReceiverID,msg.Message,msg.CreateTime)
+	if err != nil {
+		println("Error Saving message " , err)
+	}
+
+	users := map[int]bool{senderID:true , receiverID:true}
+	for userID := range users {
+		if conn, ok := clients[userID]; ok {
+			conn.WriteJSON(msg)
 		}
-
 	}
+
 }
+
+// func HandleMessages() {
+// 	for {
+// 		msg := <-broadcast
+
+// 		for client := range clients {
+// 			err := client.WriteJSON(msg)
+// 			if err != nil {
+// 				log.Println(err)
+// 				client.Close()
+// 				delete(clients, client)
+// 			}
+// 		}
+
+// 	}
+// }
 
 func GetUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := database.GetAllUsers()
@@ -111,7 +123,6 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 		"users": users,
 		"sender_id": userID,
 	}
-
 	// Send the list of users as a JSON response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

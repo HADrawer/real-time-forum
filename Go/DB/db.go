@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -49,6 +50,13 @@ type Comment struct {
 type Category struct {
 	ID   int
 	Name string
+}
+type Message struct {
+	ID			int
+	Sender_ID 	int
+	Receiver_ID int
+	Content		string
+	Created_at	string
 }
 
 func Init() {
@@ -320,3 +328,16 @@ func GetAllUsers() ([]User, error) {
 	}
 	return users , nil
 }
+
+
+//Messages Section
+
+func SaveMessage(senderID int , receiverID int , content string, createdTime time.Time)  error {
+	stmt , err := db.Prepare("INSERT INTO messages (sender_id , receiver_id , content,created_at ) VALUES(?,?,?,?)")
+	if err != nil {
+		return err
+	}
+	_, err = stmt.Exec(senderID,receiverID,content,createdTime)
+	return err
+}
+

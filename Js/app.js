@@ -237,7 +237,7 @@ function fetchAndRenderDirect(){
             currentSenderid = data.sender_id;
             const users = data.users;
             users.forEach(user => {
-                
+                if (user.ID !== currentSenderid) {
                 const userItem = document.createElement('li');
                 userItem.textContent = user.Username;
                 userItem.onclick = () => {
@@ -246,6 +246,7 @@ function fetchAndRenderDirect(){
                     chatVisible.classList.remove('hidden');
                 };
                 userList.appendChild(userItem);
+            };
             });
         })
         .catch(error => console.error('Error fetching users:', error));
@@ -268,16 +269,10 @@ function fetchAndRenderDirect(){
                 const msg = {
                     Username: 'You',
                     Message: message,
-                    sender_id : currentSenderid,
                     receiver_id : currentReceiverId
     
                 };
-    //             ID         int    		`json:"id"`
-	// SenderID   int    		`json:"sender_id"`
-	// ReceiverID int    		`json:receiver_id`
-	// Username   string 		`json:"username"`
-	// Message    string 		`json:"message"`
-	// CreateTime time.Time	`json:"createdTime"`
+ 
                 socket.send(JSON.stringify(msg));
                 messageInput.value = '';
             }

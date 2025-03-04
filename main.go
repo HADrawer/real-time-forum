@@ -30,7 +30,7 @@ func main() {
 	http.HandleFunc("/ws", handlers.HandleConnections)
 	http.HandleFunc("/users", handlers.GetUsers)
 
-	go handlers.HandleMessages()
+	// go handlers.HandleMessages()
 
 
 	log.Print("Server is running on http://localhost:8080")
