@@ -44,6 +44,7 @@ func HandleConnections(w http.ResponseWriter, r *http.Request) {
 		conn.Close()
 	}()
 
+	
 	userID, loggedIn := GetUserIDFromSession(r)
 	if !loggedIn {
 		log.Println("User not logged in")
