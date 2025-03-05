@@ -33,6 +33,9 @@ function handleNavigation() {
     }else if (path.startsWith("/Post")){
         fetchAndRenderPost()
     }else {
+        if (path !== "/404"){
+            window.location.href = '/404';
+        }
         renderNotFoundPage()
     }
 
@@ -424,9 +427,13 @@ async function fetchAndRenderPost(){
 
 
 function renderNotFoundPage(){
+    
     document.getElementById('content').innerHTML = ` 
-   <h1>404 ERROR</h1> 
-`;
+    <div class="container-404">
+        <h1>404 - Page Not Found</h1>
+        <p>Oops! The page you're looking for doesn't exist.</p>
+        <button><a href="/">Go Back</a></button>
+    </div>`;
 
 }
 function validateRegisterForm(){

@@ -34,10 +34,7 @@ func RenderTemplate(w http.ResponseWriter, data interface{}) {
 }
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		http.Redirect(w, r, "/", http.StatusFound)
-		return
-	}
+	
 	_, isLoggedIn := GetUserIDFromSession(r)
 	if !isLoggedIn {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
