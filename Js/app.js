@@ -283,14 +283,17 @@ function fetchAndRenderDirect(){
             }
         });
         socket.onmessage = (event) => {
-                const msg = JSON.parse(event.data);
+            const msg = JSON.parse(event.data);
+            if (currentReceiverId === msg.sender_id){
+
+            
                 const messageDiv = document.createElement('div');
                 messageDiv.classList.add('MessageContent');
                 messageDiv.innerHTML = `<h5><strong>${msg.username}:</strong> ${msg.message}</h5>`;
                 messagesContainer.appendChild(messageDiv);
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
                 
-               
+            }
             };      
                     
 
