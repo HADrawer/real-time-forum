@@ -1,4 +1,4 @@
-// filepath: /c:/Users/zain4/real-time-forum/Js/app.js
+
 import { handleNavigation } from './utils/navigation.js';
 
 document.addEventListener("DOMContentLoaded", function() {

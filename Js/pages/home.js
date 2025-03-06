@@ -1,5 +1,9 @@
 
 export function fetchAndRenderHomePage() {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = '/Css/home.css';
+    document.head.appendChild(link);
     fetch("/api/home-data")
         .then(response => response.json())
         .then(data => {

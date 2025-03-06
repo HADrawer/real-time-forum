@@ -1,5 +1,11 @@
 
 export function fetchAndRenderLogin() {
+    // Dynamically load the login.css file
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = '/Css/login.css';
+    document.head.appendChild(link);
+
     document.getElementById('content').innerHTML = `
         <div class="register-login">
             <form action="/login" class="register-login-form" method="post">
