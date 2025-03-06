@@ -1,10 +1,10 @@
 /* Common styles for all pages */
-* {
+/* * {
     margin: 0;
     padding: 10px;
     box-sizing: border-box;
     font-family: Arial, sans-serif;
-}
+} */
 
 body {
     min-height: 100vh;
@@ -13,10 +13,95 @@ body {
 }
 
 /* Header Styles */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, 
+        Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
 header {
-    background: linear-gradient(to right, #E6E6FA, #C29DC2);
-    padding: 1rem;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    background-color: #C29DC2;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.headerDiv {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.Project-Name a {
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+}
+
+.Project-Name a:before {
+    content: '';
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    margin-right: 10px;
+    background-color: white;
+    border-radius: 50%;
+}
+
+nav ul {
+    display: flex;
+    list-style: none;
+    align-items: center;
+}
+
+nav ul li {
+    margin-left: 25px;
+}
+
+nav ul li a {
+    color: white;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: opacity 0.2s;
+}
+
+nav ul li a:hover {
+    opacity: 0.8;
+}
+
+.Headerbutton {
+    background-color: white;
+    color: #C29DC2;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 20px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-left: 25px;
+    transition: background-color 0.2s;
+}
+
+.Headerbutton:hover {
+    background-color: #f0f0f0;
+}
+
+.search-icon {
+    color: white;
+    margin-left: 25px;
+    font-size: 18px;
+    cursor: pointer;
 }
 
 /* Footer Styles */
