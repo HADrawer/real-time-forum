@@ -202,6 +202,8 @@ function fetchAndRenderLogin(){
 
             history.pushState({},"Login","/login")
 }
+let currentReceiverId = null; 
+
 function fetchAndRenderDirect(){
     
     document.getElementById('content').innerHTML = ` 
@@ -249,6 +251,9 @@ function fetchAndRenderDirect(){
                     currentReceiverId = user.ID;
                     chatWith.textContent = user.Username;
                     chatVisible.classList.remove('hidden');
+                
+                
+                    fetchMessages(currentReceiverId);
                 };
                 userList.appendChild(userItem);
             };
@@ -261,16 +266,11 @@ function fetchAndRenderDirect(){
          socket.send(JSON.stringify({ username: username }));
         };      
 
-                        //             socket.onopen = () => {
-                        // console.log('Connected to WebSocket');
-                        // // Send username once connected
-                        // const username = prompt('Enter your username:');
-                        // socket.send(JSON.stringify(username)); // Send username to server
-                        //             };
+                        
 
         sendMessageButton.addEventListener('click', () => {
             const message = messageInput.value;
-            if (message) {
+            if (message && currentReceiverId) {
                 const msg = {
                     Username: 'You',
                     Message: message,
@@ -453,3 +453,34 @@ function validateRegisterForm(){
 }
 
 
+function fetchMessages(receiver_id) {
+    fetch(`http://${window.location.hostname}:8080/messages?receiver_id=${receiver_id}`)
+    .then(response => response.json())
+    .then(messages => {
+        const messagesContainer = document.getElementById('messages');
+        messagesContainer.innerHTML = ''; // Clear previous messages
+
+        if (Array.isArray(messages) && messages.length > 0) {
+            // If messages array is not empty
+            messages.forEach(msg => {
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('MessageContent');
+                messageDiv.innerHTML = `<h5><strong>${msg.Username}:</strong> ${msg.Content}</h5>`;
+                messagesContainer.appendChild(messageDiv);
+            });
+        } else {
+            // If no messages were returned or if the messages array is empty
+            const noMessagesDiv = document.createElement('div');
+            noMessagesDiv.classList.add('MessageContent');
+            noMessagesDiv.innerHTML = '<h5>No messages available</h5>';
+            messagesContainer.appendChild(noMessagesDiv);
+        }
+
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    })
+    .catch(error => {
+        console.error('Error fetching messages:', error);
+        const messagesContainer = document.getElementById('messages');
+        messagesContainer.innerHTML = '<h5>Error fetching messages</h5>';
+    });
+}

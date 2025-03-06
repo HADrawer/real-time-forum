@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
+
 	"github.com/gorilla/websocket"
 )
 
@@ -81,10 +83,11 @@ func SendMessage(senderID int, receiverID int, username string, message string) 
 		Message:    message,
 		CreateTime: time.Now(),
 	}
+	
 
-	err := database.SaveMessage(msg.SenderID,msg.ReceiverID,msg.Message,msg.CreateTime)
+	err := database.SaveMessage(msg.SenderID,msg.ReceiverID,msg.Username ,msg.Message,msg.CreateTime)
 	if err != nil {
-		println("Error Saving message " , err)
+		log.Printf("Error Saving message " , err)
 	}
 
 	users := map[int]bool{senderID:true , receiverID:true}
@@ -127,4 +130,17 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(ALLUsers)
+}
+
+func LoadMessages(w http.ResponseWriter,r *http.Request) {
+	userID, _ := GetUserIDFromSession(r)
+	userID2_String := r.URL.Query().Get("receiver_id")
+
+	userID2 , _ := strconv.Atoi(userID2_String)
+	messages , err := database.GetMessages(userID, userID2)
+	if err != nil {
+		log.Printf(" Error Load Messages : " , err)
+	}
+
+	json.NewEncoder(w).Encode(messages)
 }

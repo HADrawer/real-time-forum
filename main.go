@@ -29,6 +29,7 @@ func main() {
 	http.HandleFunc("/Direct", handlers.DirectHandler)
 	http.HandleFunc("/ws", handlers.HandleConnections)
 	http.HandleFunc("/users", handlers.GetUsers)
+	http.HandleFunc("/messages", handlers.LoadMessages)
 
 	//error handler
 	http.HandleFunc("/404", func(w http.ResponseWriter, r *http.Request) {
