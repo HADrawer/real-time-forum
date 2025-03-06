@@ -42,7 +42,7 @@ export function fetchAndRenderRegister() {
                             <input type="password" id="passwordConfirm" placeholder="Confirm password" required>
                             <span class="password-toggle" id="togglePasswordConfirm"><i class="far fa-eye-slash"></i></span>
                         </div>
-                        <button type="submit" class="submit-btn">Submit</button>
+                        <button type="submit" class="submit-btn">Register</button>
                         <p class="signin">
                             Already have an account? <a href="/login">Sign in</a>
                         </p>
