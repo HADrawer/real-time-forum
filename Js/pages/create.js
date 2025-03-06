@@ -1,5 +1,12 @@
 
 export function fetchAndRenderCreate() {
+
+     // Dynamically load the create.css file
+     const link = document.createElement('link');
+     link.rel = 'stylesheet';
+     link.href = '/Css/create.css';
+     document.head.appendChild(link);
+
     fetch("/api/create-data")
         .then(response => response.json())
         .then(data => {
