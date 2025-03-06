@@ -1,3 +1,5 @@
+
+
 document.addEventListener("DOMContentLoaded", function(){
     handleNavigation();
 
@@ -16,6 +18,7 @@ document.addEventListener("DOMContentLoaded", function(){
 });
 
 
+
 function handleNavigation() {
     let path = window.location.pathname;
 
@@ -25,14 +28,17 @@ function handleNavigation() {
         fetchAndRenderRegister()
     }else if (path === "/login"){
         fetchAndRenderLogin()
-    }else if (path === "/Direct"){
-        fetchAndRenderDirect()
     }else if (path === "/Create"){
         fetchAndRenderCreate()
+    }else if(path === "/Direct"){
+        fetchAndRenderDirect()
     }else if (path.startsWith("/Post")){
         fetchAndRenderPost()
     }else {
-        renderNotFoundPage();
+        if (path !== "/404"){
+            window.location.href = '/404';
+        }
+        renderNotFoundPage()
     }
 
 }
@@ -74,20 +80,20 @@ function fetchAndRenderHomePage(){
 
 function fetchAndRenderRegister(){
     document.getElementById('content').innerHTML = ` 
-           <div class="container">
-        <div class="register-section">
-            <form class="register-form" action="/register" method="post">
-                <h1 class="title">Register</h1>
-                <p class="message">Sign up here</p>
+            <div class="register-login">
                 
-                <div class="form-group">
-                    <div class="form-field">
-                        <input type="text" name="first_name" required>
-                        <label>First name</label>
-                    </div>
-                    <div class="form-field">
-                        <input type="text" name="last_name" required>
-                        <label>Last name</label>
+                    <form action="/register" class="register-login-form" method="post">
+                    <p class="title">Register</p>
+                    <p class="message">Sign up here </p>
+                    <div class="form-group">
+                        <label>
+                            <input type="text" name="first_name"  required>
+                            <span>First name</span>
+                        </label>
+                        <label>
+                            <input type="text" name="last_name" required>
+                            <span>Last name</span>
+                        </label>
                     </div>
                 </div>
                 
@@ -128,61 +134,142 @@ function fetchAndRenderRegister(){
                 <p class="signin">
                     Already have an account? <a href="/login">Sign in</a>
                 </p>
-            </form>
-        </div>
-        
-        <div class="image-section">
-            <div>
-                <h2>Every new friend is a new adventure.</h2>
-                <p>Let's get connected</p>
-            </div>
-        </div>
-    </div>`;
+                </form>
+              
+            </div>`;
             history.pushState({},"Register","/register")
 }
 function fetchAndRenderLogin(){
     document.getElementById('content').innerHTML = ` 
-           <div class="container">
-        <div class="login-section">
-            <form class="login-form">
-                <h1 class="title">Login</h1>
-                <p class="message">Login here</p>
+            <div class="register-login">
                 
-                <div class="form-group">
-                    <input type="email" required>
-                    <label>Email</label>
-                </div>
-                
-                <div class="form-group">
-                    <input type="password" required>
-                    <label>Password</label>
-                    <span class="password-toggle">👁️</span>
-                </div>
-                
-                <div class="forgot-password">
-                    <a href="#">Forgot password?</a>
-                </div>
-                
-                <button type="submit" class="submit-btn">Login</button>
-                
-                <p class="signup-link">
-                    Don't have an account? <a href="/register"">Sign up now</a>
+                    <form action="/login" class="register-login-form" method="post">
+                    <p class="title">Login</p>
+                    <p class="message">login here </p>
+                    
+                    <label>
+                        <input type="text" name="email"  required>
+                        <span>username or email</span>
+                    </label>
+                    
+                    
+                    <label>
+                        <input type="password" id="password" name="password"  required>
+                        <span>Password</span>
+                        <span class="icon" id="togglePassword"><i class="far fa-eye-slash" ></i></span>
+                    </label>
+                   
+                <button class="submitregister-login">Submit</button>
+                <span style="color:red; ">{{.InvalidLogin}}</span>
+                <p class="signin">
+                     don't have an account? <a href="/register">Register </a>
                 </p>
-            </form>
-        </div>
-        
-        <div class="image-section">
-            <div>
-                <h2>Every new friend is a new adventure.</h2>
-                <p>Let's get connected</p>
-            </div>
-        </div>
-    </div>`;
+                </form>
+              
+            </div>`;
             history.pushState({},"Login","/login")
 }
+let currentReceiverId = null; 
+
 function fetchAndRenderDirect(){
+    
     document.getElementById('content').innerHTML = ` 
+        <div class="sidebar">
+                    <h2>Users</h2>
+                    <ul class="user-list" id="userList">
+                    </ul>
+                </div>
+                            
+                <div class="chat-area" id="ChatArea">
+                    <div class="chat-header">
+                        Chat with <span id="chatWith"> </span>
+                    </div>
+
+                    <div class="chat-messages" id="messages">
+                        <!-- Messages will appear here -->
+                        
+                    </div>
+                    <div class="chat-input-container">
+                        <input type="text" class="chat-input" id="messageInput" placeholder="Type a message..." />
+                        <button class="chat-send" id="sendMessage">Send</button>
+                    </div>
+                </div>  
     `;
+
+    const socket = new WebSocket(`ws://${window.location.hostname}:8080/ws`);
+    const messagesContainer = document.getElementById('messages');
+    const messageInput = document.getElementById('messageInput');
+    const sendMessageButton = document.getElementById('sendMessage');
+    const userList = document.getElementById('userList');
+    const chatWith = document.getElementById('chatWith');
+    const chatVisible = document.getElementById('ChatArea');
+    chatVisible.classList.add('hidden');
+    fetch(`http://${window.location.hostname}:8080/users`)
+        .then(response => response.json())
+        .then(data => {
+
+            currentSenderid = data.sender_id;
+            const users = data.users;
+            users.forEach(user => {
+                if (user.ID !== currentSenderid) {
+                const userItem = document.createElement('li');
+                userItem.textContent = user.Username;
+                userItem.onclick = () => {
+                    currentReceiverId = user.ID;
+                    chatWith.textContent = user.Username;
+                    chatVisible.classList.remove('hidden');
+                
+                
+                    fetchMessages(currentReceiverId);
+                };
+                userList.appendChild(userItem);
+            };
+            });
+        })
+        .catch(error => console.error('Error fetching users:', error));
+                    
+        socket.onopen = () => {
+        const username = "You"; // This should be dynamically set based on the logged-in user
+         socket.send(JSON.stringify({ username: username }));
+        };      
+
+                        
+
+        sendMessageButton.addEventListener('click', () => {
+            const message = messageInput.value;
+            if (message && currentReceiverId) {
+                const msg = {
+                    Username: 'You',
+                    Message: message,
+                    receiver_id : currentReceiverId
+    
+                };
+ 
+                socket.send(JSON.stringify(msg));
+                messageInput.value = '';
+            }
+        });
+        socket.onmessage = (event) => {
+            const msg = JSON.parse(event.data);
+            if (currentReceiverId === msg.sender_id){
+
+            
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('MessageContent');
+                messageDiv.innerHTML = `<h5><strong>${msg.username}:</strong> ${msg.message}</h5>`;
+                messagesContainer.appendChild(messageDiv);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                
+            }
+            };      
+                    
+
+        messageInput.addEventListener('keypress', (e)=> {
+            if (e.key === 'Enter') {
+                sendMessageButton.click();
+            }
+        });
+
     history.pushState({},"direct","/Direct")
 }
 
@@ -313,26 +400,54 @@ async function fetchAndRenderPost(){
 
 function renderNotFoundPage(){
     
-}
-document.addEventListener("DOMContentLoaded", function () {
-    const togglePasswordVisibility = (inputElement,ToggleElemet) => {
-        if(inputElement.type === "password") {
-            inputElement.type = "text";
-            toggleElemet.innerHTML = `<i class="far fa-eye"></i>`;
-        }else {
-             inputElement.type = "password";
-            toggleElemet.innerHTML = `<i class="far fa-eye-slash"></i>`;
-        }
-    }
-    const passwordInput = document.getElementById("password");
-    const togglePassword = document.getElementById("togglePassword");
-    const passwordConfirm = document.getElementById("passwordConfirm");
-    const togglePasswordConfirm = document.getElementById("togglePasswordConfirm");
+    document.getElementById('content').innerHTML = ` 
+    <div class="container-404">
+        <h1>404 - Page Not Found</h1>
+        <p>Oops! The page you're looking for doesn't exist.</p>
+        <button onclick="location.reload();"><a href="/">Go Back</a></button>
+    </div>`;
 
-    togglePassword.addEventListener("click", () => {
-        togglePasswordVisibility(passwordInput,togglePassword);
+}
+function validateRegisterForm(){
+    const password = document.getElementById("password").value
+    const confirmPassword = document.getElementById("passwordConfirm").value
+    
+    if (password !== confirmPassword) {
+        alert("Passwords do not match!");
+        return false;
+    }
+    return true
+}
+
+
+function fetchMessages(receiver_id) {
+    fetch(`http://${window.location.hostname}:8080/messages?receiver_id=${receiver_id}`)
+    .then(response => response.json())
+    .then(messages => {
+        const messagesContainer = document.getElementById('messages');
+        messagesContainer.innerHTML = ''; // Clear previous messages
+
+        if (Array.isArray(messages) && messages.length > 0) {
+            // If messages array is not empty
+            messages.forEach(msg => {
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('MessageContent');
+                messageDiv.innerHTML = `<h5><strong>${msg.Username}:</strong> ${msg.Content}</h5>`;
+                messagesContainer.appendChild(messageDiv);
+            });
+        } else {
+            // If no messages were returned or if the messages array is empty
+            const noMessagesDiv = document.createElement('div');
+            noMessagesDiv.classList.add('MessageContent');
+            noMessagesDiv.innerHTML = '<h5>No messages available</h5>';
+            messagesContainer.appendChild(noMessagesDiv);
+        }
+
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    })
+    .catch(error => {
+        console.error('Error fetching messages:', error);
+        const messagesContainer = document.getElementById('messages');
+        messagesContainer.innerHTML = '<h5>Error fetching messages</h5>';
     });
-    togglePasswordConfirm.addEventListener("click",() => {
-        togglePasswordVisibility(passwordConfirm,togglePasswordConfirm)
-    });
-});
+}

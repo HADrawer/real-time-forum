@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -49,6 +50,14 @@ type Comment struct {
 type Category struct {
 	ID   int
 	Name string
+}
+type Message struct {
+	ID			int
+	Username	string
+	Sender_ID 	int
+	Receiver_ID int
+	Content		string
+	Created_at	string
 }
 
 func Init() {
@@ -302,4 +311,53 @@ func GetCommentsByPostID(postID int) ([]Comment, error) {
 		comments = append(comments, comment)
 	}
 	return comments, nil
+}
+func GetAllUsers() ([]User, error) {
+	var users []User
+	rows , err := db.Query("SELECT id, username FROM users")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var user User
+		if err := rows.Scan(&user.ID,&user.Username); err != nil {
+			return nil,err
+		}
+		users = append(users, user)
+	}
+	return users , nil
+}
+
+
+//Messages Section
+
+func SaveMessage(senderID int , receiverID int , username string , content string, createdTime time.Time)  error {
+	stmt , err := db.Prepare("INSERT INTO messages (sender_id , receiver_id , username , content,created_at ) VALUES(?,?,?,?,?)")
+	if err != nil {
+		return err
+	}
+	_, err = stmt.Exec(senderID,receiverID, username ,content,createdTime)
+	return err
+}
+
+func GetMessages(sender_id int , recevier_id int) ([]Message , error) {
+	var messages []Message
+	rows , err := db.Query("SELECT id , sender_id , receiver_id , username , content , created_at FROM messages WHERE  (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)" , sender_id , recevier_id , recevier_id , sender_id)
+	if err != nil {
+		return nil , err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var message Message
+		var createdAt time.Time
+		if err := rows.Scan(&message.ID , &message.Sender_ID, &message.Receiver_ID ,&message.Username ,&message.Content , &createdAt); err != nil {
+			return nil , err
+		}
+		message.Created_at = createdAt.Format("2006-01-02 15:04:05")
+		messages = append(messages, message)
+	}
+	return messages , nil
 }

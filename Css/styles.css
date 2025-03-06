@@ -58,8 +58,14 @@ footer {
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
     overflow: hidden;
 }
+Headerbutton a{
+    color: black;
+    font-weight: bold;
+    font-size: 15px;
+    text-decoration: none;
+}
 
-.login-section {
+main{
     flex: 1;
     padding: 40px;
 }
@@ -306,103 +312,130 @@ body {
     padding: 0 5px;
 }
 
-.form-field input:focus ~ label,
-.form-field input:valid ~ label {
-    top: 0;
-    font-size: 0.8em;
-}
 
-.password-toggle {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
-    color: #C29DC2;
-}
+/*------------Post Page Style ----------------*/
 
-.submit-btn {
-    width: 100%;
-    padding: 12px;
-    background-color: #C29DC2;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1em;
-    transition: background-color 0.3s ease;
-    margin-top: 20px;
-}
 
-.submit-btn:hover {
-    background-color: #D9B5DD;
-}
 
-.signin {
-    text-align: center;
-    margin-top: 20px;
-    color: #E4C4E2;
-}
 
-.signin a {
-    color: #C29DC2;
-    text-decoration: none;
-}
 
-/* Home Page Styles */
-.page-home {
-    padding: 20px;
-}
+.info-post h3{
+    font-size: 30px;
+  }
+  .info-post h5{
+    font-size: 10px;
+  }
+  .info-post h1 {
+      font-size: 50px;
+      text-align: left; /* Aligned text to the left */
+      color: #312f2f;
+  }
+  
+  .info-post p {
+      margin: 20px 0 25px;
+      font-size: 18px;
+      text-align: left; /* Aligned text to the left */
+      color: #555;
+  }
+  
+  .button-primary {
+      background-color: #e09ebf;
+      color:  #DE5499;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: 600;
+      margin-top: 20px;
+      transition: background-color 0.3s ease-in-out;
+      display: inline-block; /* Ensures the button doesn’t take up full width */
+      text-align: center; /* Centers text inside button */
+  }
+  
+  .button-primary:hover {
+      background-color: #d45a76;
+  }
+  
 
-.page-home .content-wrapper {
-    max-width: 1200px;
-    margin: 0 auto;
-}
+  
 
-.page-home .posts {
-    display: grid;
-    gap: 20px;
-}
-
-/* Create Post Page Styles */
-.page-create {
-    padding: 20px;
-}
-
-.page-create .create-container {
-    max-width: 800px;
-    margin: 0 auto;
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-}
-
-/* Post Page Styles */
-.page-post {
-    padding: 20px;
-}
-
-.page-post .info-post {
-    max-width: 800px;
-    margin: 0 auto;
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-}
-
-/* Direct Messages Page Styles */
-.page-direct {
-    padding: 20px;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .page-login .container,
-    .page-register .container {
-        flex-direction: column;
-    }
+  @media screen and (max-width: 480px) {
+      .content {
+        width: 100%;
+        padding: 15px;
+        word-wrap: break-word; /* Allows long words to break and wrap to the next line */
+    overflow-wrap: break-word; /* Modern equivalent of word-wrap */
+    white-space: normal; /* Allows text to wrap normally */
+      }
     
-    /* Add more responsive styles for other pages */
-}
+      .info-post h1 {
+        font-size: 28px;
+      }
+    
+      .info-post p {
+        font-size: 14px;
+      }
+    
+      .button-primary {
+        font-size: 14px;
+        padding: 6px 12px;
+      }
+    }
+    .reaction-buttons {
+      display: flex;
+      justify-content: flex-end;
+      margin: 20px 0;
+  }
+  
+  .comment-box {
+      background-color: rgba(245, 185, 185, 0.9);
+      border: 2px solid #264143;
+      border-radius: 20px;
+      padding: 15px;
+      margin: 10px 0;
+      box-shadow: 3px 4px 0px 1px #E99F4C;
+      color: #312f2f;
+  }
+  
+  .comment-content {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3; /* Limit to 3 lines */
+    overflow: hidden;
+    margin-bottom: 5px;
+    transition: max-height 0.3s ease; /* Smooth transition */
+    position: relative;
+    cursor: pointer; /* Change cursor to pointer */
+    word-wrap: break-word; /* Allows long words to break and wrap to the next line */
+    overflow-wrap: break-word; /* Modern equivalent of word-wrap */
+    white-space: normal; /* Allows text to wrap normally */
+  }
+  
+  .comment-content.expanded {
+    -webkit-line-clamp: unset; /* Remove line limit */
+    max-height: none; /* Allow full height */
+  }
+  
+  .comment-content:hover {
+      max-height: none; /* Expand on hover */
+      cursor: pointer; /* Change cursor to pointer */
+      word-wrap: break-word; /* Allows long words to break and wrap to the next line */
+    overflow-wrap: break-word; /* Modern equivalent of word-wrap */
+    white-space: normal; /* Allows text to wrap normally */
+  }
+  
+  .divider {
+      border: 1px solid #264143;
+      margin: 20px 0;
+  }
+  
+  .comment-text, .content p {
+    word-wrap: break-word; /* Allows long words to break and wrap to the next line */
+    overflow-wrap: break-word; /* Modern equivalent of word-wrap */
+    white-space: normal; /* Allows text to wrap normally */
+  }
+  
+  .comment-content {
+    margin-bottom: 20px; /* Adds space between comments */
+  }
