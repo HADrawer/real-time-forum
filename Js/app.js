@@ -74,84 +74,110 @@ function fetchAndRenderHomePage(){
 
 function fetchAndRenderRegister(){
     document.getElementById('content').innerHTML = ` 
-            <div class="register-login">
+           <div class="container">
+        <div class="register-section">
+            <form class="register-form" action="/register" method="post">
+                <h1 class="title">Register</h1>
+                <p class="message">Sign up here</p>
                 
-                    <form action="/register" class="register-login-form" method="post">
-                    <p class="title">Register</p>
-                    <p class="message">Sign up here </p>
-                    <div class="form-group">
-                        <label>
-                            <input type="text" name="first_name"  required>
-                            <span>First name</span>
-                        </label>
-                        <label>
-                            <input type="text" name="last_name" required>
-                            <span>Last name</span>
-                        </label>
+                <div class="form-group">
+                    <div class="form-field">
+                        <input type="text" name="first_name" required>
+                        <label>First name</label>
                     </div>
-                    <label>
-                        <input type="text" name="username"  required>
-                        <span>username</span>
-                    </label>
-                    <label>
-                        <input type="email" name="email"  required>
-                        <span>Email</span>
-                    </label>
-                    <label>
-                        <input type="text" name="age"  required>
-                        <span>Age</span>
-                    </label>
-                    <label>
-                        <input type="text" name="gender"  required>
-                        <span>Gender</span>
-                    </label>
-                    <label>
-                        <input type="password" id="password" name="password"  required>
-                        <span>Password</span>
-                        <span class="icon" id="togglePassword"><i class="far fa-eye-slash" ></i></span>
-                    </label>
-                    <label>
-                        <input type="password" id="passwordConfirm" >
-                        <span>Confirm password</span>
-                        <span class="icon" id="togglePasswordConfirm"><i class="far fa-eye-slash" ></i></span>
-                    </label>
-                <button class="submitregister-login">Submit</button>
+                    <div class="form-field">
+                        <input type="text" name="last_name" required>
+                        <label>Last name</label>
+                    </div>
+                </div>
+                
+                <div class="form-field">
+                    <input type="text" name="username" required>
+                    <label>Username</label>
+                </div>
+                
+                <div class="form-field">
+                    <input type="email" name="email" required>
+                    <label>Email</label>
+                </div>
+                
+                <div class="form-field">
+                    <input type="text" name="age" required>
+                    <label>Age</label>
+                </div>
+                
+                <div class="form-field">
+                    <input type="text" name="gender" required>
+                    <label>Gender</label>
+                </div>
+                
+                <div class="form-field">
+                    <input type="password" name="password" id="password" required>
+                    <label>Password</label>
+                    <span class="password-toggle" id="togglePassword"></span>
+                </div>
+                
+                <div class="form-field">
+                    <input type="password" id="passwordConfirm" required>
+                    <label>Confirm password</label>
+                    <span class="password-toggle" id="togglePasswordConfirm"></span>
+                </div>
+                
+                <button type="submit" class="submit-btn">Submit</button>
+                
                 <p class="signin">
-                    Already have an account? <a href="/login">Signin </a>
+                    Already have an account? <a href="/login">Sign in</a>
                 </p>
-                </form>
-              
-            </div>`;
+            </form>
+        </div>
+        
+        <div class="image-section">
+            <div>
+                <h2>Every new friend is a new adventure.</h2>
+                <p>Let's get connected</p>
+            </div>
+        </div>
+    </div>`;
             history.pushState({},"Register","/register")
 }
 function fetchAndRenderLogin(){
     document.getElementById('content').innerHTML = ` 
-            <div class="register-login">
+           <div class="container">
+        <div class="login-section">
+            <form class="login-form">
+                <h1 class="title">Login</h1>
+                <p class="message">Login here</p>
                 
-                    <form action="/login" class="register-login-form" method="post">
-                    <p class="title">Login</p>
-                    <p class="message">login here </p>
-                    
-                    <label>
-                        <input type="text" name="email"  required>
-                        <span>username or email</span>
-                    </label>
-                    
-                    
-                    <label>
-                        <input type="password" id="password" name="password"  required>
-                        <span>Password</span>
-                        <span class="icon" id="togglePassword"><i class="far fa-eye-slash" ></i></span>
-                    </label>
-                   
-                <button class="submitregister-login">Submit</button>
-                <span style="color:red; ">{{.InvalidLogin}}</span>
-                <p class="signin">
-                     don't have an account? <a href="/register">Register </a>
+                <div class="form-group">
+                    <input type="email" required>
+                    <label>Email</label>
+                </div>
+                
+                <div class="form-group">
+                    <input type="password" required>
+                    <label>Password</label>
+                    <span class="password-toggle">👁️</span>
+                </div>
+                
+                <div class="forgot-password">
+                    <a href="#">Forgot password?</a>
+                </div>
+                
+                <button type="submit" class="submit-btn">Login</button>
+                
+                <p class="signup-link">
+                    Don't have an account? <a href="/register"">Sign up now</a>
                 </p>
-                </form>
-              
-            </div>`;
+            </form>
+        </div>
+        
+        <div class="image-section">
+            <div>
+                <h2>Every new friend is a new adventure.</h2>
+                <p>Let's get connected</p>
+            </div>
+        </div>
+    </div>`;
             history.pushState({},"Login","/login")
 }
 function fetchAndRenderDirect(){
