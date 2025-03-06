@@ -1,5 +1,6 @@
 
 export function fetchAndRenderLogin() {
+    console.log("fetchAndRenderLogin called");
     // Dynamically load the login.css file
     const link = document.createElement('link');
     link.rel = 'stylesheet';

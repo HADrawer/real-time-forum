@@ -1,0 +1,145 @@
+.container {
+    display: flex;
+    max-width: 1000px;
+    width: 100%;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+Headerbutton a{
+    color: black;
+    font-weight: bold;
+    font-size: 15px;
+    text-decoration: none;
+}
+
+main{
+    flex: 1;
+    padding: 40px;
+}
+
+.image-section {
+    flex: 1;
+    background-color: #C29DC2;
+    padding: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-align: center;
+}
+
+.image-section h2 {
+    font-size: 2em;
+    margin-bottom: 15px;
+}
+
+.image-section p {
+    font-size: 1.1em;
+}
+
+.login-form {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.title {
+    color: #C29DC2;
+    font-size: 2em;
+    margin-bottom: 10px;
+}
+
+.message {
+    color: #D9B5DD;
+    margin-bottom: 30px;
+}
+
+.form-group {
+    position: relative;
+    margin-bottom: 25px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #EED3E6;
+    border-radius: 5px;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus {
+    border-color: #C29DC2;
+    box-shadow: 0 0 0 2px rgba(194, 157, 194, 0.2);
+}
+
+.form-group label {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #E4C4E2;
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus ~ label,
+.form-group input:valid ~ label {
+    top: -10px;
+    left: 5px;
+    font-size: 0.8em;
+    background: white;
+    padding: 0 5px;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #C29DC2;
+}
+
+.forgot-password {
+    text-align: right;
+    margin-bottom: 20px;
+}
+
+.forgot-password a {
+    color: #C29DC2;
+    text-decoration: none;
+    font-size: 0.9em;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: #C29DC2;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s ease;
+}
+
+.submit-btn:hover {
+    background-color: #D9B5DD;
+}
+
+.signup-link {
+    text-align: center;
+    margin-top: 20px;
+    color: #E4C4E2;
+}
+
+.signup-link a {
+    color: #C29DC2;
+    text-decoration: none;
+}
+
+.signup-link a:hover {
+    text-decoration: underline;
+}

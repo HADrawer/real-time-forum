@@ -1,0 +1,78 @@
+.register-section {
+    flex: 1;
+    padding: 40px;
+}
+
+.image-section {
+    flex: 1;
+    background-color: #C29DC2;
+    padding: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-align: center;
+}
+
+.image-section h2 {
+    font-size: 2em;
+    margin-bottom: 15px;
+}
+
+.image-section p {
+    font-size: 1.1em;
+}
+
+.register-form {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.title {
+    color: #C29DC2;
+    font-size: 2em;
+    margin-bottom: 10px;
+}
+
+.message {
+    color: #D9B5DD;
+    margin-bottom: 30px;
+}
+
+.form-group {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.form-field {
+    position: relative;
+    margin-bottom: 25px;
+    width: 100%;
+}
+
+.form-field input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #EED3E6;
+    border-radius: 5px;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.form-field input:focus {
+    border-color: #C29DC2;
+    box-shadow: 0 0 0 2px rgba(194, 157, 194, 0.2);
+}
+
+.form-field label {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #E4C4E2;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    background: white;
+    padding: 0 5px;
+}

@@ -9,6 +9,7 @@ import { renderNotFoundPage } from '../pages/notFound.js';
 
 export function handleNavigation() {
     let path = window.location.pathname;
+    console.log("Current path:", path); // Debugging
 
     if (path === "/") {
         fetchAndRenderHomePage();
