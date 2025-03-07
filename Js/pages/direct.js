@@ -1,3 +1,5 @@
+let currentUserID;
+let currentReceiverId;
 
 export function fetchAndRenderDirect() {
  // Dynamically load the messages.css file
@@ -36,10 +38,10 @@ export function fetchAndRenderDirect() {
     fetch(`http://${window.location.hostname}:8080/users`)
         .then(response => response.json())
         .then(data => {
-            currentSenderid = data.sender_id;
+            currentUserID = data.sender_id;
             const users = data.users;
             users.forEach(user => {
-                if (user.ID !== currentSenderid) {
+                if (user.ID !== currentUserID) {
                     const userItem = document.createElement('li');
                     userItem.textContent = user.Username;
                     userItem.onclick = () => {
@@ -55,39 +57,60 @@ export function fetchAndRenderDirect() {
         .catch(error => console.error('Error fetching users:', error));
 
     socket.onopen = () => {
-        const username = "You"; // This should be dynamically set based on the logged-in user
-        socket.send(JSON.stringify({ username: username }));
+        console.log("WebSocket connection established");
+
     };
 
     sendMessageButton.addEventListener('click', () => {
-        const message = messageInput.value;
-        if (message && currentReceiverId) {
-            const msg = {
-                Username: 'You',
-                Message: message,
-                receiver_id: currentReceiverId
-            };
-            socket.send(JSON.stringify(msg));
-            messageInput.value = '';
-        }
+        sendMessage();
+        
     });
 
     socket.onmessage = (event) => {
         const msg = JSON.parse(event.data);
-        if (currentReceiverId === msg.sender_id) {
-            const messageDiv = document.createElement('div');
-            messageDiv.classList.add('MessageContent');
-            messageDiv.innerHTML = `<h5><strong>${msg.username}:</strong> ${msg.message}</h5>`;
-            messagesContainer.appendChild(messageDiv);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        if ((currentReceiverId === msg.sender_id) || (currentReceiverId === msg.receiver_id && msg.sender_id === currentUserID)) {
+            displayMessage(msg);
         }
+        
     };
 
     messageInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
+            sendMessage();
             sendMessageButton.click();
         }
     });
+
+    function sendMessage() {
+        const message = messageInput.value.trim();
+        if (message && currentReceiverId) {
+            const msg = {
+                receiver_id: currentReceiverId,
+                message: message
+            };
+            socket.send(JSON.stringify(msg));
+            messageInput.value = '';
+        }
+    }
+
+    function displayMessage(msg) {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('MessageContent');
+        
+        // Add a class based on whether this is a sent or received message
+        if (msg.sender_id === currentUserID) {
+            messageDiv.classList.add('sent');
+            messageDiv.innerHTML = `<h5><strong>You:</strong> ${msg.message}</h5>`;
+        } else {
+            messageDiv.classList.add('received');
+            messageDiv.innerHTML = `<h5><strong>${msg.username}:</strong> ${msg.message}</h5>`;
+        }
+        
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    
 
     history.pushState({}, "direct", "/Direct");
 }
@@ -103,8 +126,16 @@ function fetchMessages(receiver_id) {
                 messages.forEach(msg => {
                     const messageDiv = document.createElement('div');
                     messageDiv.classList.add('MessageContent');
-                    messageDiv.innerHTML = `<h5><strong>${msg.Username}:</strong> ${msg.Content}</h5>`;
+                    if (msg.Sender_ID === currentUserID && msg.Receiver_ID === currentReceiverId) {
+                        messageDiv.classList.add('sent');
+                        messageDiv.innerHTML = `<h5><strong>You:</strong> ${msg.Content}</h5>`;
+                    } else if( msg.Receiver_ID === currentUserID) {
+                        messageDiv.classList.add('received');
+                        messageDiv.innerHTML = `<h5><strong>${msg.Username}:</strong> ${msg.Content}</h5>`;
+                    }
                     messagesContainer.appendChild(messageDiv);
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
                 });
             } else {
                 const noMessagesDiv = document.createElement('div');
@@ -121,3 +152,4 @@ function fetchMessages(receiver_id) {
             messagesContainer.innerHTML = '<h5>Error fetching messages</h5>';
         });
 }
+
