@@ -29,10 +29,14 @@ export function fetchAndRenderRegister() {
                             <input type="email" name="email" placeholder="Email" required>
                         </div>
                         <div class="form-field">
-                            <input type="text" name="age" placeholder="Age" required>
+                            <input type="number" name="age" placeholder="Age" min="14" max="80" required>
                         </div>
-                        <div class="form-field">
-                            <input type="text" name="gender" placeholder="Gender" required>
+                        <div class="form-field select-wrapper">
+                            <select name="gender" required>
+                                <option value="" disabled selected>Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                            </select>
                         </div>
                         <div class="form-field">
                             <input type="password" name="password" id="password" placeholder="Password" required>

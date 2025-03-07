@@ -16,7 +16,7 @@ export function fetchAndRenderLogin() {
                         <p class="title">Login</p>
                         <p class="message">Enter your email and password to login</p>
                         <label>
-                            <input type="email" name="email" placeholder="Enter your email" required>
+                            <input type="text" name="email" placeholder="Enter your username or email" required>
                         </label>
                         <label>
                             <input type="password" name="password" placeholder="Enter your password" required>

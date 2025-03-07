@@ -168,11 +168,12 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			user, err = database.GetUserByUsername(Email_UserName)
 		}
-
-		if err != nil || bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) != nil {
-			pageData := map[string]interface{}{
-				"InvalidLogin": "The Username or Password is Uncorrect",
-			}
+ // Check if the user exists and the password is correct
+ if err != nil || bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) != nil {
+	pageData := map[string]interface{}{
+		"IsLoggedIn":    false,
+		"InvalidLogin":  "The Username or Password is incorrect", // Error message
+	}
 			RenderTemplate(w, pageData)
 			return
 		}
