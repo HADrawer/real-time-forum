@@ -1,6 +1,9 @@
+// Updated direct.js with styling improvements
+let currentSenderid;
+let currentReceiverId;
 
 export function fetchAndRenderDirect() {
- // Dynamically load the messages.css file
+    // Dynamically load the messages.css file
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = '/Css/messages.css';
@@ -13,7 +16,7 @@ export function fetchAndRenderDirect() {
         </div>
         <div class="chat-area" id="ChatArea">
             <div class="chat-header">
-                Chat with <span id="chatWith"> </span>
+                Chat with <span id="chatWith"></span>
             </div>
             <div class="chat-messages" id="messages">
                 <!-- Messages will appear here -->
@@ -42,7 +45,17 @@ export function fetchAndRenderDirect() {
                 if (user.ID !== currentSenderid) {
                     const userItem = document.createElement('li');
                     userItem.textContent = user.Username;
+                    userItem.setAttribute('data-user-id', user.ID);
+                    
                     userItem.onclick = () => {
+                        // Remove active class from all users
+                        document.querySelectorAll('.user-list li').forEach(li => {
+                            li.classList.remove('active');
+                        });
+                        
+                        // Add active class to clicked user
+                        userItem.classList.add('active');
+                        
                         currentReceiverId = user.ID;
                         chatWith.textContent = user.Username;
                         chatVisible.classList.remove('hidden');
@@ -55,39 +68,55 @@ export function fetchAndRenderDirect() {
         .catch(error => console.error('Error fetching users:', error));
 
     socket.onopen = () => {
-        const username = "You"; // This should be dynamically set based on the logged-in user
-        socket.send(JSON.stringify({ username: username }));
+        console.log("WebSocket connection established");
     };
 
     sendMessageButton.addEventListener('click', () => {
-        const message = messageInput.value;
-        if (message && currentReceiverId) {
-            const msg = {
-                Username: 'You',
-                Message: message,
-                receiver_id: currentReceiverId
-            };
-            socket.send(JSON.stringify(msg));
-            messageInput.value = '';
-        }
+        sendMessage();
     });
 
     socket.onmessage = (event) => {
         const msg = JSON.parse(event.data);
-        if (currentReceiverId === msg.sender_id) {
-            const messageDiv = document.createElement('div');
-            messageDiv.classList.add('MessageContent');
-            messageDiv.innerHTML = `<h5><strong>${msg.username}:</strong> ${msg.message}</h5>`;
-            messagesContainer.appendChild(messageDiv);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        
+        if ((currentReceiverId === msg.sender_id) || (currentReceiverId === msg.receiver_id && msg.sender_id === currentSenderid)) {
+            displayMessage(msg);
         }
     };
 
     messageInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-            sendMessageButton.click();
+            sendMessage();
         }
     });
+
+    function sendMessage() {
+        const message = messageInput.value.trim();
+        if (message && currentReceiverId) {
+            const msg = {
+                receiver_id: currentReceiverId,
+                message: message
+            };
+            socket.send(JSON.stringify(msg));
+            messageInput.value = '';
+        }
+    }
+
+    function displayMessage(msg) {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('MessageContent');
+        
+        // Add a class based on whether this is a sent or received message
+        if (msg.sender_id === currentSenderid) {
+            messageDiv.classList.add('sent');
+            messageDiv.innerHTML = `<h5><strong>You:</strong> ${msg.message}</h5>`;
+        } else {
+            messageDiv.classList.add('received');
+            messageDiv.innerHTML = `<h5><strong>${msg.username}:</strong> ${msg.message}</h5>`;
+        }
+        
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
 
     history.pushState({}, "direct", "/Direct");
 }
@@ -103,13 +132,22 @@ function fetchMessages(receiver_id) {
                 messages.forEach(msg => {
                     const messageDiv = document.createElement('div');
                     messageDiv.classList.add('MessageContent');
-                    messageDiv.innerHTML = `<h5><strong>${msg.Username}:</strong> ${msg.Content}</h5>`;
+                    
+                    // Check if the message is sent by the current user or received
+                    if (msg.SenderID === currentSenderid) {
+                        messageDiv.classList.add('sent');
+                        messageDiv.innerHTML = `<h5><strong>You:</strong> ${msg.Content}</h5>`;
+                    } else {
+                        messageDiv.classList.add('received');
+                        messageDiv.innerHTML = `<h5><strong>${msg.Username}:</strong> ${msg.Content}</h5>`;
+                    }
+                    
                     messagesContainer.appendChild(messageDiv);
                 });
             } else {
                 const noMessagesDiv = document.createElement('div');
                 noMessagesDiv.classList.add('MessageContent');
-                noMessagesDiv.innerHTML = '<h5>No messages available</h5>';
+                noMessagesDiv.innerHTML = '<h5>No messages yet. Say hello!</h5>';
                 messagesContainer.appendChild(noMessagesDiv);
             }
 
@@ -118,6 +156,6 @@ function fetchMessages(receiver_id) {
         .catch(error => {
             console.error('Error fetching messages:', error);
             const messagesContainer = document.getElementById('messages');
-            messagesContainer.innerHTML = '<h5>Error fetching messages</h5>';
+            messagesContainer.innerHTML = '<div class="MessageContent"><h5>Error loading messages. Please try again.</h5></div>';
         });
 }
