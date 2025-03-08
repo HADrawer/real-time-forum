@@ -40,7 +40,39 @@ export function fetchAndRenderDirect() {
         .then(data => {
             currentUserID = data.sender_id;
             const users = data.users;
-            users.forEach(user => {
+
+        //     Promise.all(users.map(user => {
+        //         return fetchLastMessage(user.ID).then(lastMessage => {
+        //             user.lastMessage = lastMessage;
+        //             return user
+        //         });
+        //     }))
+        //     .then(userWithMessages => {
+        //         userWithMessages.sort((a,b) => {
+        //             if (a.lastMessage && b.lastMessage){
+        //                 return new Date(b.lastMessage.timestamp) - new Date(a.lastMessage.timestamp);
+        //             }
+        //             return a.Username.localeCompare(b.Username)
+        //         });
+
+        //         userWithMessages.forEach(user => {
+        //             if(user.ID !== currentUserID) {
+        //                 const userItem = document.createElement('li');
+        //                 userItem.textContent = user.Username;
+        //                 userItem.onclick= () => {
+        //                     currentReceiverId = user.ID;
+        //                     chatWith.textContent = user.Username;
+        //                     chatVisible.classList.remove('hidden');
+        //                     fetchMessages(currentReceiverId);  
+        //                 };
+        //                 userList.appendChild(userItem);
+        //             }
+        //         });
+        //     })
+        //     .catch(error => console.error('Error fetching users or messages:', error));
+        // })
+        // .catch(error => console.error('Error fetching users:', error));
+                users.forEach(user => {
                 if (user.ID !== currentUserID) {
                     const userItem = document.createElement('li');
                     userItem.textContent = user.Username;
@@ -124,6 +156,7 @@ function fetchMessages(receiver_id) {
 
             if (Array.isArray(messages) && messages.length > 0) {
                 messages.forEach(msg => {
+                    
                     const messageDiv = document.createElement('div');
                     messageDiv.classList.add('MessageContent');
                     if (msg.Sender_ID === currentUserID && msg.Receiver_ID === currentReceiverId) {
@@ -153,3 +186,17 @@ function fetchMessages(receiver_id) {
         });
 }
 
+// function fetchLastMessage(userId) {
+//     return fetch(`http://${window.location.hostname}:8080/messages?receiver_id=${userId}`)
+//         .then(response => response.json())
+//         .then(messages => {
+//             if (Array.isArray(messages) && messages.length > 0) {
+//                 return messages[messages.length - 1];
+//             }
+//             return nil
+//         })
+//         .catch(error => {
+//             console.error('Error fetching last message for user:', userId , error);
+//             return null;
+//         })
+// }

@@ -59,7 +59,14 @@ type Message struct {
 	Content		string
 	Created_at	string
 }
-
+// type Message struct {
+//     ID         int       `json:"id"`
+//     Username   string    `json:"username"`
+//     SenderID   int       `json:"sender_id"`
+//     ReceiverID int       `json:"receiver_id"`
+//     Content    string    `json:"message"`
+//     Created_at time.Time `json:"created_time"`
+// }
 func Init() {
 	var err error
 

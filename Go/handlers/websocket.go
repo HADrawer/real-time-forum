@@ -144,3 +144,15 @@ func LoadMessages(w http.ResponseWriter,r *http.Request) {
 
 	json.NewEncoder(w).Encode(messages)
 }
+// GetLastMessage fetches the last message between userID and the target user
+// func GetLastMessage(userID, targetID int) (*MessageJson, error) {
+//     messages, err := database.GetMessages(userID, targetID)
+//     if err != nil {
+//         return nil, err
+//     }
+
+//     if len(messages) > 0 {
+//         return &messages[len(messages)-1], nil // Return the last message
+//     }
+//     return nil, nil // No messages found
+// }
