@@ -35,32 +35,18 @@ export function fetchAndRenderDirect() {
     const chatVisible = document.getElementById('ChatArea');
     chatVisible.classList.add('hidden');
 
-    fetch(`http://${window.location.hostname}:8080/users`)
-        .then(response => response.json())
-        .then(data => {
-            currentUserID = data.sender_id;
-            // const users = data.users;
+    // fetch(`http://${window.location.hostname}:8080/users`)
+    //     .then(response => response.json())
+    //     .then(data => {
+    //         currentUserID = data.sender_id;
+    //         // const users = data.users;
 
-            updateUserList(data.users);
+    //         updateUserList(data.users);
         
-            //     users.forEach(userObj => {
-            //         const user = userObj.user;
-            //         const lastMessage = userObj.lastMessage;
-
-            //         const userItem = document.createElement('li');
-            //         userItem.textContent = user.Username;
-              
-            //         userItem.onclick = () => {
-            //             currentReceiverId = user.ID;
-            //             chatWith.textContent = user.Username;
-            //             chatVisible.classList.remove('hidden');
-            //             fetchMessages(currentReceiverId);
-            //         };
-            //         userList.appendChild(userItem);
-                
-            // });
-        })
-        .catch(error => console.error('Error fetching users:', error));
+            
+    //     })
+    //     .catch(error => console.error('Error fetching users:', error));
+    fetchUsersAndUpdateList()
 
     socket.onopen = () => {
         console.log("WebSocket connection established");
@@ -102,9 +88,21 @@ export function fetchAndRenderDirect() {
             };
             socket.send(JSON.stringify(msg));
             messageInput.value = '';
+
+            fetchUsersAndUpdateList();
+            fetchMessages(currentReceiverId);
         }
     }
+    function fetchUsersAndUpdateList() {
+        fetch(`http://${window.location.hostname}:8080/users`)
+            .then(response => response.json())
+            .then(data => {
+                currentUserID = data.sender_id;
 
+                updateUserList(data.users); // Update the user list
+            })
+            .catch(error => console.error('Error fetching users:', error));
+    }
     function displayMessage(msg) {
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('MessageContent');

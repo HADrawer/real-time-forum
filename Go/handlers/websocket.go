@@ -150,28 +150,29 @@ func GetUsersForClient(userID int) (map[string]interface{}, error) {
 		lastMessageI := userListWithMessages[i]["lastMessage"]
 		lastMessageJ := userListWithMessages[j]["lastMessage"]
 
-		if lastMessageI == nil && lastMessageJ == nil {
-			return userListWithMessages[i]["user"].(database.User).Username < userListWithMessages[j]["user"].(database.User).Username
+		
+
+		if lastMessageI != nil && lastMessageJ != nil {
+			msgI, okI := lastMessageI.(*MessageJson)
+			msgJ, okJ := lastMessageJ.(*MessageJson)
+
+			if !okI || !okJ {
+				log.Println("Type assertion failed for lastMessage")
+				return false
+			}
+			if msgI == nil || msgJ == nil {
+				return false
+			}
+			return msgI.CreateTime.After(msgJ.CreateTime)
 		}
-		if lastMessageI == nil {
-			return false
-		}
-		if lastMessageJ == nil {
+		if lastMessageI != nil {
 			return true
 		}
-
-		msgI , okI := lastMessageI.(*MessageJson)
-		msgJ , okJ := lastMessageJ.(*MessageJson)
-
-		if !okI || !okJ {
-			log.Println("Type assertion failed for lastMessage")
-			return false
-		}
-		if msgI == nil || msgJ == nil {
+		if lastMessageJ != nil {
 			return false
 		}
 
-		return msgI.CreateTime.After(msgJ.CreateTime)
+		return userListWithMessages[i]["user"].(database.User).Username <userListWithMessages[j]["user"].(database.User).Username
 	})
 	return map[string]interface{}{
 		"users": userListWithMessages,
@@ -212,28 +213,28 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 		lastMessageI := userListWithMessages[i]["lastMessage"]
 		lastMessageJ := userListWithMessages[j]["lastMessage"]
 
-		if lastMessageI == nil && lastMessageJ == nil {
-			return userListWithMessages[i]["user"].(database.User).Username < userListWithMessages[j]["user"].(database.User).Username
+		if lastMessageI != nil && lastMessageJ != nil {
+			msgI, okI := lastMessageI.(*MessageJson)
+			msgJ, okJ := lastMessageJ.(*MessageJson)
+
+			if !okI || !okJ {
+				log.Println("Type assertion failed for lastMessage")
+				return false
+			}
+			if msgI == nil || msgJ == nil {
+				return false
+			}
+			return msgI.CreateTime.After(msgJ.CreateTime)
 		}
-		if lastMessageI == nil {
-			return false
-		}
-		if lastMessageJ == nil {
+		if lastMessageI != nil {
 			return true
 		}
-
-		msgI , okI := lastMessageI.(*MessageJson)
-		msgJ , okJ := lastMessageJ.(*MessageJson)
-
-		if !okI || !okJ {
-			log.Println("Type assertion failed for lastMessage")
-			return false
-		}
-		if msgI == nil || msgJ == nil {
+		if lastMessageJ != nil {
 			return false
 		}
 
-		return msgI.CreateTime.After(msgJ.CreateTime)
+		return userListWithMessages[i]["user"].(database.User).Username <userListWithMessages[j]["user"].(database.User).Username
+	
 	})
 
 	ALLUsers := map[string]interface{}{
