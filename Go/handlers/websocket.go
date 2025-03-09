@@ -145,37 +145,53 @@ func GetUsersForClient(userID int) (map[string]interface{}, error) {
 		}
 	}
 
+	type userWithMessageStatus struct {
+		index int
+		hasMessage bool
+		messageTime time.Time
+		username string
+	}
 
-	sort.Slice(userListWithMessages , func(i, j int) bool {
-		lastMessageI := userListWithMessages[i]["lastMessage"]
-		lastMessageJ := userListWithMessages[j]["lastMessage"]
-
-		
-
-		if lastMessageI != nil && lastMessageJ != nil {
-			msgI, okI := lastMessageI.(*MessageJson)
-			msgJ, okJ := lastMessageJ.(*MessageJson)
-
-			if !okI || !okJ {
-				log.Println("Type assertion failed for lastMessage")
-				return false
-			}
-			if msgI == nil || msgJ == nil {
-				return false
-			}
-			return msgI.CreateTime.After(msgJ.CreateTime)
+	userStatuses := make([]userWithMessageStatus, len(userListWithMessages))
+	for i , userData := range userListWithMessages {
+		status := userWithMessageStatus{
+			index: i,
+			hasMessage: false,
+			username: userData["user"].(database.User).Username,
 		}
-		if lastMessageI != nil {
+
+		if userData["lastMessage"] != nil {
+			if msg, ok := userData["lastMessage"].(*MessageJson); ok && msg != nil {
+				status.hasMessage = true
+				status.messageTime = msg.CreateTime
+			}
+		}
+		userStatuses[i] = status
+	}
+
+
+	sort.Slice(userStatuses , func(i, j int) bool {
+		if userStatuses[i].hasMessage && userStatuses[j].hasMessage {
+			return userStatuses[i].messageTime.After(userStatuses[j].messageTime)
+		}
+
+		if userStatuses[i].hasMessage {
 			return true
 		}
-		if lastMessageJ != nil {
+		if userStatuses[j].hasMessage {
 			return false
 		}
-
-		return userListWithMessages[i]["user"].(database.User).Username <userListWithMessages[j]["user"].(database.User).Username
+		
+		
+	
+		return userStatuses[i].username < userStatuses[j].username
 	})
+	sortedList := make([]map[string]interface{}, len(userListWithMessages))
+	for i, status := range userStatuses {
+		sortedList[i] = userListWithMessages[status.index]
+	}
 	return map[string]interface{}{
-		"users": userListWithMessages,
+		"users": sortedList,
 		"sender_id": userID,
 	} , nil
 }
@@ -209,36 +225,54 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 
-	sort.Slice(userListWithMessages , func(i, j int) bool {
-		lastMessageI := userListWithMessages[i]["lastMessage"]
-		lastMessageJ := userListWithMessages[j]["lastMessage"]
+	type userWithMessageStatus struct {
+		index int
+		hasMessage bool
+		messageTime time.Time
+		username string
+	}
 
-		if lastMessageI != nil && lastMessageJ != nil {
-			msgI, okI := lastMessageI.(*MessageJson)
-			msgJ, okJ := lastMessageJ.(*MessageJson)
-
-			if !okI || !okJ {
-				log.Println("Type assertion failed for lastMessage")
-				return false
-			}
-			if msgI == nil || msgJ == nil {
-				return false
-			}
-			return msgI.CreateTime.After(msgJ.CreateTime)
+	userStatuses := make([]userWithMessageStatus, len(userListWithMessages))
+	for i , userData := range userListWithMessages {
+		status := userWithMessageStatus{
+			index: i,
+			hasMessage: false,
+			username: userData["user"].(database.User).Username,
 		}
-		if lastMessageI != nil {
+
+		if userData["lastMessage"] != nil {
+			if msg, ok := userData["lastMessage"].(*MessageJson); ok && msg != nil {
+				status.hasMessage = true
+				status.messageTime = msg.CreateTime
+			}
+		}
+		userStatuses[i] = status
+	}
+
+
+	sort.Slice(userStatuses , func(i, j int) bool {
+		if userStatuses[i].hasMessage && userStatuses[j].hasMessage {
+			return userStatuses[i].messageTime.After(userStatuses[j].messageTime)
+		}
+
+		if userStatuses[i].hasMessage {
 			return true
 		}
-		if lastMessageJ != nil {
+		if userStatuses[j].hasMessage {
 			return false
 		}
-
-		return userListWithMessages[i]["user"].(database.User).Username <userListWithMessages[j]["user"].(database.User).Username
+		
+		
 	
+		return userStatuses[i].username < userStatuses[j].username
 	})
+	sortedList := make([]map[string]interface{}, len(userListWithMessages))
+	for i, status := range userStatuses {
+		sortedList[i] = userListWithMessages[status.index]
+	}
 
 	ALLUsers := map[string]interface{}{
-		"users": userListWithMessages,
+		"users": sortedList,
 		"sender_id": userID,
 	}
 
@@ -270,8 +304,10 @@ func GetLastMessage(userID, targetID int) (*MessageJson, error) {
 		return nil, err
 	}
 
+
 	if len(messages) > 0 {
 		lastMessage := messages[len(messages)-1]
+
 		return &MessageJson{
 			ID:         lastMessage.ID,
 			SenderID:   lastMessage.Sender_ID,
