@@ -34,6 +34,20 @@ export function fetchAndRenderCreate() {
                             </div>
                         </form>
                     </div>`;
+
+
+                const form = document.getElementById("createPostForm");
+                form.addEventListener('submit', function(event){
+                    const checkboxes = form.querySelectorAll('input[name="categories[]"]:checked');
+                    const categoryError = document.getElementById('categoryError');
+
+                    if (checkboxes.length === 0) {
+                        event.preventDefault();
+                        categoryError.style.display = 'block';
+                    }else {
+                        categoryError.style.display = 'none';
+                    }
+                })
             }
         });
 }
