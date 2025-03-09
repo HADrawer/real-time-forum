@@ -39,52 +39,26 @@ export function fetchAndRenderDirect() {
         .then(response => response.json())
         .then(data => {
             currentUserID = data.sender_id;
-            const users = data.users;
+            // const users = data.users;
 
-        //     Promise.all(users.map(user => {
-        //         return fetchLastMessage(user.ID).then(lastMessage => {
-        //             user.lastMessage = lastMessage;
-        //             return user
-        //         });
-        //     }))
-        //     .then(userWithMessages => {
-        //         userWithMessages.sort((a,b) => {
-        //             if (a.lastMessage && b.lastMessage){
-        //                 return new Date(b.lastMessage.timestamp) - new Date(a.lastMessage.timestamp);
-        //             }
-        //             return a.Username.localeCompare(b.Username)
-        //         });
+            updateUserList(data.users);
+        
+            //     users.forEach(userObj => {
+            //         const user = userObj.user;
+            //         const lastMessage = userObj.lastMessage;
 
-        //         userWithMessages.forEach(user => {
-        //             if(user.ID !== currentUserID) {
-        //                 const userItem = document.createElement('li');
-        //                 userItem.textContent = user.Username;
-        //                 userItem.onclick= () => {
-        //                     currentReceiverId = user.ID;
-        //                     chatWith.textContent = user.Username;
-        //                     chatVisible.classList.remove('hidden');
-        //                     fetchMessages(currentReceiverId);  
-        //                 };
-        //                 userList.appendChild(userItem);
-        //             }
-        //         });
-        //     })
-        //     .catch(error => console.error('Error fetching users or messages:', error));
-        // })
-        // .catch(error => console.error('Error fetching users:', error));
-                users.forEach(user => {
-                if (user.ID !== currentUserID) {
-                    const userItem = document.createElement('li');
-                    userItem.textContent = user.Username;
-                    userItem.onclick = () => {
-                        currentReceiverId = user.ID;
-                        chatWith.textContent = user.Username;
-                        chatVisible.classList.remove('hidden');
-                        fetchMessages(currentReceiverId);
-                    };
-                    userList.appendChild(userItem);
-                }
-            });
+            //         const userItem = document.createElement('li');
+            //         userItem.textContent = user.Username;
+              
+            //         userItem.onclick = () => {
+            //             currentReceiverId = user.ID;
+            //             chatWith.textContent = user.Username;
+            //             chatVisible.classList.remove('hidden');
+            //             fetchMessages(currentReceiverId);
+            //         };
+            //         userList.appendChild(userItem);
+                
+            // });
         })
         .catch(error => console.error('Error fetching users:', error));
 
@@ -100,8 +74,14 @@ export function fetchAndRenderDirect() {
 
     socket.onmessage = (event) => {
         const msg = JSON.parse(event.data);
-        if ((currentReceiverId === msg.sender_id) || (currentReceiverId === msg.receiver_id && msg.sender_id === currentUserID)) {
-            displayMessage(msg);
+
+        if (msg.type === "userListUpdate") {
+            updateUserList(msg.data.users);
+        }else if (msg.type === "message") {
+
+            if ((currentReceiverId === msg.sender_id) || (currentReceiverId === msg.receiver_id && msg.sender_id === currentUserID)) {
+                displayMessage(msg.data);
+            }
         }
         
     };
@@ -200,3 +180,25 @@ function fetchMessages(receiver_id) {
 //             return null;
 //         })
 // }
+
+function updateUserList(users){
+    const userList = document.getElementById("userList");
+    userList.innerHTML = ""; // Clear the current user list
+
+    users.forEach(userObj => {
+        const user = userObj.user;
+        const lastMessage = userObj.lastMessage;
+
+        const userItem = document.createElement("li");
+        userItem.textContent = user.Username;
+
+        userItem.onclick = () => {
+            currentReceiverId = user.ID;
+            document.getElementById("chatWith").textContent = user.Username;
+            document.getElementById("ChatArea").classList.remove("hidden");
+            fetchMessages(currentReceiverId);
+        };
+
+        userList.appendChild(userItem);
+    });
+}
