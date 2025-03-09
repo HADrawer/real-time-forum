@@ -35,17 +35,7 @@ export function fetchAndRenderDirect() {
     const chatVisible = document.getElementById('ChatArea');
     chatVisible.classList.add('hidden');
 
-    // fetch(`http://${window.location.hostname}:8080/users`)
-    //     .then(response => response.json())
-    //     .then(data => {
-    //         currentUserID = data.sender_id;
-    //         // const users = data.users;
-
-    //         updateUserList(data.users);
-        
-            
-    //     })
-    //     .catch(error => console.error('Error fetching users:', error));
+  
     fetchUsersAndUpdateList()
 
     socket.onopen = () => {
@@ -65,7 +55,7 @@ export function fetchAndRenderDirect() {
             updateUserList(msg.data.users);
         }else if (msg.type === "message") {
 
-            if ((currentReceiverId === msg.sender_id) || (currentReceiverId === msg.receiver_id && msg.sender_id === currentUserID)) {
+            if ((currentReceiverId === msg.data.sender_id) || (currentReceiverId === msg.data.receiver_id && msg.data.sender_id === currentUserID)) {
                 displayMessage(msg.data);
             }
         }
@@ -89,7 +79,6 @@ export function fetchAndRenderDirect() {
             socket.send(JSON.stringify(msg));
             messageInput.value = '';
 
-            fetchUsersAndUpdateList();
             fetchMessages(currentReceiverId);
         }
     }
@@ -164,20 +153,7 @@ function fetchMessages(receiver_id) {
         });
 }
 
-// function fetchLastMessage(userId) {
-//     return fetch(`http://${window.location.hostname}:8080/messages?receiver_id=${userId}`)
-//         .then(response => response.json())
-//         .then(messages => {
-//             if (Array.isArray(messages) && messages.length > 0) {
-//                 return messages[messages.length - 1];
-//             }
-//             return nil
-//         })
-//         .catch(error => {
-//             console.error('Error fetching last message for user:', userId , error);
-//             return null;
-//         })
-// }
+
 
 function updateUserList(users){
     const userList = document.getElementById("userList");

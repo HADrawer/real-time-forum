@@ -91,7 +91,7 @@ func SendMessage(senderID int, receiverID int, username string, message string) 
 		log.Printf("Error Saving message " , err)
 	}
 
-	users := map[int]bool{senderID:true , receiverID:true}
+	users := map[int]bool{senderID: true, receiverID: true}
 	for userID := range users {
 		if conn, ok := clients[userID]; ok {
 			conn.WriteJSON(map[string]interface{}{
@@ -113,10 +113,17 @@ func broadcastUserListUpdate() {
             continue
 		}
 
-		conn.WriteJSON(map[string]interface{}{
+		err = conn.WriteJSON(map[string]interface{}{
 			"type": "userListUpdate",
 			"data": userList,
 		})
+		if err != nil {
+			log.Printf("Error sending user list update to %d: %v", userID, err)
+			conn.Close()
+			delete(clients, userID)
+		}
+		
+		
 	}
 
 }
