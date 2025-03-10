@@ -99,7 +99,7 @@ export function fetchAndRenderDirect() {
         // Add a class based on whether this is a sent or received message
         if (msg.sender_id === currentUserID) {
             messageDiv.classList.add('sent');
-            messageDiv.innerHTML = `<h5><strong>You:</strong> ${msg.message}</h5>`;
+            messageDiv.innerHTML = `<h5><strong>You:</strong> ${msg.message} , ${msg.createdTime}</h5>`;
         } else {
             messageDiv.classList.add('received');
             messageDiv.innerHTML = `<h5><strong>${msg.username}:</strong> ${msg.message}</h5>`;
@@ -121,17 +121,29 @@ function fetchMessages(receiver_id) {
             const messagesContainer = document.getElementById('messages');
             messagesContainer.innerHTML = ''; // Clear previous messages
 
+            
+
             if (Array.isArray(messages) && messages.length > 0) {
                 messages.forEach(msg => {
                     
                     const messageDiv = document.createElement('div');
                     messageDiv.classList.add('MessageContent');
+                    
+                    const date = new Date(msg.Created_at);
+                    
+                    const day = date.getDate();
+                    const month = date.getMonth() + 1;  // Months are 0-indexed, so we add 1
+                    const hour = date.getHours();
+                    const minute = date.getMinutes();
+
+                    const formattedDate = `${day < 10 ? '0' + day : day}/${month < 10 ? '0' + month : month} ${hour < 10 ? '0' + hour : hour}:${minute < 10 ? '0' + minute : minute}`;
+
                     if (msg.Sender_ID === currentUserID && msg.Receiver_ID === currentReceiverId) {
                         messageDiv.classList.add('sent');
-                        messageDiv.innerHTML = `<h5><strong>You:</strong> ${msg.Content}</h5>`;
+                        messageDiv.innerHTML = `<h5><strong>You:</strong> ${msg.Content}</h5> <h6>${formattedDate}</h6>`;
                     } else if( msg.Receiver_ID === currentUserID) {
                         messageDiv.classList.add('received');
-                        messageDiv.innerHTML = `<h5><strong>${msg.Username}:</strong> ${msg.Content}</h5>`;
+                        messageDiv.innerHTML = `<h5><strong>${msg.Username}:</strong> ${msg.Content}</h5> <h6>${formattedDate}</h6>`;
                     }
                     messagesContainer.appendChild(messageDiv);
                     messagesContainer.scrollTop = messagesContainer.scrollHeight;

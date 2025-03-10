@@ -191,7 +191,16 @@ main#content {
     margin-right: 5px;
     color: #444;
 }
-
+.MessageContent h6 {
+    margin: 0;
+    font-weight: normal;
+    font-size: 14px;
+    line-height: 1.4;
+}
+.MessageContent.sent h6,
+.MessageContent.sent h6  {
+    color: white;
+}
 /* Style for messages sent by the current user */
 .MessageContent.sent {
     background-color: #C29DC2;
