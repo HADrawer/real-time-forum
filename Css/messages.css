@@ -190,7 +190,7 @@ main#content {
 .MessageContent h5 strong {
     margin-right: 5px;
     color: #444;
-}zz
+}
 
 /* Style for messages sent by the current user */
 .MessageContent.sent {

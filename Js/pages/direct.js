@@ -140,7 +140,7 @@ function fetchMessages(receiver_id) {
 
                     if (msg.Sender_ID === currentUserID && msg.Receiver_ID === currentReceiverId) {
                         messageDiv.classList.add('sent');
-                        messageDiv.innerHTML = `<h5><strong>You:</strong> ${msg.Content} , ${formattedDate}</h5>`;
+                        messageDiv.innerText = `<h5><strong>You:</strong> ${msg.Content} , ${formattedDate}</h5>`;
                     } else if( msg.Receiver_ID === currentUserID) {
                         messageDiv.classList.add('received');
                         messageDiv.innerHTML = `<h5><strong>${msg.Username}:</strong> ${msg.Content}, ${formattedDate}</h5>`;
