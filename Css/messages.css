@@ -1,4 +1,4 @@
-/* messages.css */
+/* messages.css - Updated with error styling */
 * {
     margin: 0;
     padding: 0;
@@ -184,6 +184,8 @@ main#content {
     border-radius: 18px;
     position: relative;
     background-color: #e9e9e9;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .MessageContent h5 {
@@ -191,6 +193,7 @@ main#content {
     font-weight: normal;
     font-size: 14px;
     line-height: 1.4;
+    word-break: break-word;
 }
 
 .MessageContent h5 strong {
@@ -224,6 +227,7 @@ main#content {
     border-top: 1px solid #eaeaea;
     display: flex;
     background-color: #fff;
+    flex-wrap: wrap;
 }
 
 .chat-input {
@@ -240,12 +244,23 @@ main#content {
     border-color: #C29DC2;
 }
 
+/* New style for error message */
+.message-error {
+    width: 100%;
+    color: #e53935;
+    font-size: 13px;
+    margin: 5px 0;
+    padding: 5px 15px;
+    display: none;
+}
+
 .chat-send {
     background-color: #C29DC2;
     color: white;
     border: none;
     border-radius: 20px;
     padding: 0 20px;
+    height: 40px;
     margin-left: 10px;
     font-weight: 500;
     cursor: pointer;
@@ -254,6 +269,11 @@ main#content {
 
 .chat-send:hover {
     background-color: #b58cb5;
+}
+
+.chat-send:disabled {
+    background-color: #ddd;
+    cursor: not-allowed;
 }
 
 /* Footer styling */

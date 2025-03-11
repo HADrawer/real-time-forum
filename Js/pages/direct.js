@@ -2,7 +2,7 @@ let currentUserID;
 let currentReceiverId;
 
 export function fetchAndRenderDirect() {
- // Dynamically load the messages.css file
+    // Dynamically load the messages.css file
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = '/Css/messages.css';
@@ -22,6 +22,7 @@ export function fetchAndRenderDirect() {
             </div>
             <div class="chat-input-container">
                 <input type="text" class="chat-input" id="messageInput" placeholder="Type a message..." />
+                <div id="messageError" class="message-error"></div>
                 <button class="chat-send" id="sendMessage">Send</button>
             </div>
         </div>`;
@@ -29,23 +30,26 @@ export function fetchAndRenderDirect() {
     const socket = new WebSocket(`ws://${window.location.hostname}:8080/ws`);
     const messagesContainer = document.getElementById('messages');
     const messageInput = document.getElementById('messageInput');
+    const messageError = document.getElementById('messageError');
     const sendMessageButton = document.getElementById('sendMessage');
     const userList = document.getElementById('userList');
     const chatWith = document.getElementById('chatWith');
     const chatVisible = document.getElementById('ChatArea');
     chatVisible.classList.add('hidden');
 
-  
-    fetchUsersAndUpdateList()
+    // Set up input validation
+    setupMessageValidation();
+    
+    fetchUsersAndUpdateList();
 
     socket.onopen = () => {
         console.log("WebSocket connection established");
-
     };
 
     sendMessageButton.addEventListener('click', () => {
-        sendMessage();
-        
+        if (validateMessageInput()) {
+            sendMessage();
+        }
     });
 
     socket.onmessage = (event) => {
@@ -53,21 +57,64 @@ export function fetchAndRenderDirect() {
 
         if (msg.type === "userListUpdate") {
             updateUserList(msg.data.users);
-        }else if (msg.type === "message") {
-
+        } else if (msg.type === "message") {
             if ((currentReceiverId === msg.data.sender_id) || (currentReceiverId === msg.data.receiver_id && msg.data.sender_id === currentUserID)) {
                 displayMessage(msg.data);
             }
         }
-        
     };
 
     messageInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-            sendMessage();
-            sendMessageButton.click();
+            if (validateMessageInput()) {
+                sendMessage();
+            }
+            e.preventDefault(); // Prevent default Enter behavior
         }
     });
+
+    function setupMessageValidation() {
+        if (messageInput && messageError) {
+            messageInput.addEventListener('input', function() {
+                validateMessageInput(false); // Don't show error on typing
+            });
+        }
+    }
+
+    function validateMessageInput(showError = true) {
+        const message = messageInput.value.trim();
+        
+        // Check if message is empty
+        if (message === '') {
+            if (showError) {
+                showMessageError('Please enter a message.');
+            }
+            return false;
+        }
+        
+        // Check for HTML tags
+        if (/<[^>]*>/g.test(message)) {
+            showMessageError('HTML tags are not allowed in messages.');
+            return false;
+        }
+        
+        // Hide error message
+        hideMessageError();
+        return true;
+    }
+
+    function showMessageError(message) {
+        if (messageError) {
+            messageError.textContent = message;
+            messageError.style.display = 'block';
+        }
+    }
+
+    function hideMessageError() {
+        if (messageError) {
+            messageError.style.display = 'none';
+        }
+    }
 
     function sendMessage() {
         const message = messageInput.value.trim();
@@ -78,38 +125,42 @@ export function fetchAndRenderDirect() {
             };
             socket.send(JSON.stringify(msg));
             messageInput.value = '';
-
+            hideMessageError();
             fetchMessages(currentReceiverId);
         }
     }
+
     function fetchUsersAndUpdateList() {
         fetch(`http://${window.location.hostname}:8080/users`)
             .then(response => response.json())
             .then(data => {
                 currentUserID = data.sender_id;
-
                 updateUserList(data.users); // Update the user list
             })
             .catch(error => console.error('Error fetching users:', error));
     }
+
     function displayMessage(msg) {
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('MessageContent');
         
+        // Sanitize the message content to prevent XSS
+        const sanitizedMessage = sanitizeHtml(msg.message);
+        const sanitizedTime = msg.createdTime ? sanitizeHtml(msg.createdTime) : '';
+        const sanitizedUsername = msg.username ? sanitizeHtml(msg.username) : '';
+        
         // Add a class based on whether this is a sent or received message
         if (msg.sender_id === currentUserID) {
             messageDiv.classList.add('sent');
-            messageDiv.innerHTML = `<h5><strong>You:</strong> ${msg.message} , ${msg.createdTime}</h5>`;
+            messageDiv.innerHTML = `<h5><strong>You:</strong> ${sanitizedMessage} ${sanitizedTime ? ', ' + sanitizedTime : ''}</h5>`;
         } else {
             messageDiv.classList.add('received');
-            messageDiv.innerHTML = `<h5><strong>${msg.username}:</strong> ${msg.message}</h5>`;
+            messageDiv.innerHTML = `<h5><strong>${sanitizedUsername}:</strong> ${sanitizedMessage}</h5>`;
         }
         
         messagesContainer.appendChild(messageDiv);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
-
-    
 
     history.pushState({}, "direct", "/Direct");
 }
@@ -121,11 +172,8 @@ function fetchMessages(receiver_id) {
             const messagesContainer = document.getElementById('messages');
             messagesContainer.innerHTML = ''; // Clear previous messages
 
-            
-
             if (Array.isArray(messages) && messages.length > 0) {
                 messages.forEach(msg => {
-                    
                     const messageDiv = document.createElement('div');
                     messageDiv.classList.add('MessageContent');
                     
@@ -138,16 +186,18 @@ function fetchMessages(receiver_id) {
 
                     const formattedDate = `${day < 10 ? '0' + day : day}/${month < 10 ? '0' + month : month} ${hour < 10 ? '0' + hour : hour}:${minute < 10 ? '0' + minute : minute}`;
 
+                    // Sanitize content to prevent XSS
+                    const sanitizedContent = sanitizeHtml(msg.Content);
+                    const sanitizedUsername = sanitizeHtml(msg.Username || '');
+                    
                     if (msg.Sender_ID === currentUserID && msg.Receiver_ID === currentReceiverId) {
                         messageDiv.classList.add('sent');
-                        messageDiv.innerText = `<h5><strong>You:</strong> ${msg.Content} , ${formattedDate}</h5>`;
-                    } else if( msg.Receiver_ID === currentUserID) {
+                        messageDiv.innerHTML = `<h5><strong>You:</strong> ${sanitizedContent} , ${formattedDate}</h5>`;
+                    } else if (msg.Receiver_ID === currentUserID) {
                         messageDiv.classList.add('received');
-                        messageDiv.innerHTML = `<h5><strong>${msg.Username}:</strong> ${msg.Content}, ${formattedDate}</h5>`;
+                        messageDiv.innerHTML = `<h5><strong>${sanitizedUsername}:</strong> ${sanitizedContent}, ${formattedDate}</h5>`;
                     }
                     messagesContainer.appendChild(messageDiv);
-                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
                 });
             } else {
                 const noMessagesDiv = document.createElement('div');
@@ -165,9 +215,7 @@ function fetchMessages(receiver_id) {
         });
 }
 
-
-
-function updateUserList(users){
+function updateUserList(users) {
     const userList = document.getElementById("userList");
     userList.innerHTML = ""; // Clear the current user list
 
@@ -176,15 +224,28 @@ function updateUserList(users){
         const lastMessage = userObj.lastMessage;
 
         const userItem = document.createElement("li");
-        userItem.textContent = user.Username;
+        // Sanitize the username
+        userItem.textContent = sanitizeHtml(user.Username);
 
         userItem.onclick = () => {
             currentReceiverId = user.ID;
-            document.getElementById("chatWith").textContent = user.Username;
+            document.getElementById("chatWith").textContent = sanitizeHtml(user.Username);
             document.getElementById("ChatArea").classList.remove("hidden");
             fetchMessages(currentReceiverId);
         };
 
         userList.appendChild(userItem);
     });
+}
+
+// Function to sanitize HTML and prevent XSS
+function sanitizeHtml(text) {
+    if (!text) return '';
+    
+    return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
 }

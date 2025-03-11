@@ -1,72 +1,193 @@
 export async function fetchAndRenderPost() {
-      // Dynamically load the post.css file
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = '/Css/post.css';
-      document.head.appendChild(link);
-      
+    // Dynamically load the post.css file
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = '/Css/post.css';
+    document.head.appendChild(link);
+    
+    // Extract post ID from URL parameters
     const urlParams = new URLSearchParams(window.location.search);
     const postId = urlParams.get('id');
+    
     if (!postId) {
         console.error("Post ID not found.");
         return;
     }
+    
     const postIdInt = parseInt(postId, 10);
-
+    
     if (isNaN(postIdInt)) {
         console.error("Post ID is not a valid integer.");
         return;
     }
-
+    
     const data = { id: postIdInt };
-
-    const response = await fetch('/api/post-data', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-    });
-
-    if (response.ok) {
-        const data = await response.json();
-        const content = document.getElementById("content");
-        if (content) {
-            if (data.Post) {
-                content.innerHTML = `
-                    <div class="info-post">
-                        <div class="comment-box">
-                            <h1>${data.Post.Title}</h1>
-                            <h3>Content:</h3>
-                            <p onclick="this.classList.toggle('expanded');">${data.Post.Content}</p>
-                            <p>Author: ${data.Post.Author}</p>
-                        </div>
-                        <h2>Add a Comment</h2>
-                        <form action="/Comment" method="post" onsubmit="return validateForm()">
-                            <input name="PostID" value="${data.Post.ID}" type="hidden">
-                            <textarea name="PostComment" id="Comment" placeholder="Write Your Comment here" maxlength="250" required></textarea><br>
-                            <div id="CommentError" style="color:red; display:none;"></div>
-                            <input type="submit" class="button-primary post" value="Add Comment">
-                        </form>
-                        <hr class="divider">
-                        <h2>Comments</h2>
-                        <ul>
-                            ${data.Comments && data.Comments.length > 0 ? data.Comments.map(comment => `
-                                <div class="Post-box">
-                                    <h3>${comment.Author}</h3>
-                                    <div class="comment-content" onclick="this.classList.toggle('expanded');">
-                                        <p class="comment-text">${comment.Content}</p>
-                                    </div>
-                                    <h6>${comment.Created_at}</h6>
-                                </div>
-                            `).join("") : `<p>No comments yet.</p>`}
-                        </ul>
-                    </div>`;
-            } else {
-                content.innerHTML = `<p>Post not found.</p>`;
-            }
+    
+    try {
+        const response = await fetch('/api/post-data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
         }
-    } else {
-        console.log("Error fetching post data");
+        
+        const responseData = await response.json();
+        const content = document.getElementById("content");
+        
+        if (content && responseData.Post) {
+            // Sanitize content from potential HTML
+            const sanitizedTitle = sanitizeHtml(responseData.Post.Title);
+            const sanitizedContent = sanitizeHtml(responseData.Post.Content);
+            const sanitizedAuthor = sanitizeHtml(responseData.Post.Author);
+            
+            content.innerHTML = `
+                <div class="info-post">
+                    <div class="comment-box">
+                        <h1>${sanitizedTitle}</h1>
+                        <h3>Content:</h3>
+                        <div class="post-content">
+                            <p>${sanitizedContent}</p>
+                        </div>
+                        <div class="author-info">
+                            <p>Posted by <span class="author-name">${sanitizedAuthor}</span></p>
+                        </div>
+                    </div>
+                    
+                    <div class="comment-section">
+                        <h2>Add a Comment</h2>
+                        <form class="comment-form" action="/Comment" method="post" onsubmit="return validateCommentForm()">
+                            <input name="PostID" value="${responseData.Post.ID}" type="hidden">
+                            <textarea 
+                                name="PostComment" 
+                                id="Comment" 
+                                placeholder="Write your comment here..." 
+                                maxlength="250" 
+                                required
+                            ></textarea>
+                            <div id="CommentError"></div>
+                            <button type="submit" class="button-primary post">Add Comment</button>
+                        </form>
+                    
+                        <hr class="divider">
+                        
+                        <h2>Comments</h2>
+                        <div class="comment-list">
+                            ${responseData.Comments && responseData.Comments.length > 0 
+                                ? responseData.Comments.map(comment => `
+                                    <div class="Post-box">
+                                        <h3>${sanitizeHtml(comment.Author)}</h3>
+                                        <div class="comment-content">
+                                            <p class="comment-text">${sanitizeHtml(comment.Content)}</p>
+                                        </div>
+                                        <h6>${sanitizeHtml(comment.Created_at)}</h6>
+                                    </div>
+                                `).join("") 
+                                : `<p class="no-comments">No comments yet. Be the first to comment!</p>`
+                            }
+                        </div>
+                    </div>
+                </div>`;
+                
+            // Add event listener for comment validation
+            setupCommentValidation();
+        } else {
+            content.innerHTML = `
+                <div class="info-post">
+                    <div class="comment-box">
+                        <h1>Post not found</h1>
+                        <p>The post you're looking for doesn't exist or has been removed.</p>
+                        <a href="/" class="button-primary post">Back to Home</a>
+                    </div>
+                </div>`;
+        }
+    } catch (error) {
+        console.error("Error fetching post data:", error);
+        document.getElementById("content").innerHTML = `
+            <div class="info-post">
+                <div class="comment-box">
+                    <h1>Error Loading Post</h1>
+                    <p>There was a problem loading this post. Please try again later.</p>
+                    <a href="/" class="button-primary post">Back to Home</a>
+                </div>
+            </div>`;
+    }
+}
+
+// Function to sanitize HTML and prevent XSS
+function sanitizeHtml(text) {
+    if (!text) return '';
+    
+    return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+// Function to validate the comment form
+function validateCommentForm() {
+    const commentEl = document.getElementById('Comment');
+    const errorEl = document.getElementById('CommentError');
+    
+    if (!commentEl || !errorEl) return true;
+    
+    const comment = commentEl.value.trim();
+    
+    // Check if comment is empty
+    if (comment === '') {
+        errorEl.textContent = 'Please enter a comment.';
+        errorEl.style.display = 'block';
+        return false;
+    }
+    
+    // Check if comment is too short
+    if (comment.length < 3) {
+        errorEl.textContent = 'Your comment is too short. Please enter at least 3 characters.';
+        errorEl.style.display = 'block';
+        return false;
+    }
+    
+    // Check for HTML tags
+    if (/<[^>]*>/g.test(comment)) {
+        errorEl.textContent = 'HTML tags are not allowed in comments.';
+        errorEl.style.display = 'block';
+        return false;
+    }
+    
+    errorEl.style.display = 'none';
+    return true;
+}
+
+// Setup event listeners for comment validation
+function setupCommentValidation() {
+    const commentEl = document.getElementById('Comment');
+    const errorEl = document.getElementById('CommentError');
+    
+    if (commentEl && errorEl) {
+        commentEl.addEventListener('input', function() {
+            // Check for HTML tags while typing
+            if (/<[^>]*>/g.test(this.value)) {
+                errorEl.textContent = 'HTML tags are not allowed in comments.';
+                errorEl.style.display = 'block';
+            } else {
+                errorEl.style.display = 'none';
+            }
+        });
+        
+        // Add validation to the form
+        const form = commentEl.closest('form');
+        if (form) {
+            form.addEventListener('submit', function(event) {
+                if (!validateCommentForm()) {
+                    event.preventDefault();
+                }
+            });
+        }
     }
 }
