@@ -137,7 +137,7 @@ function validateCommentForm() {
     
     if (!commentEl || !errorEl) return true;
     
-    const comment = commentEl.value.trim();
+    let comment = commentEl.value.trim();
     
     // Check if comment is empty
     if (comment === '') {
@@ -153,12 +153,9 @@ function validateCommentForm() {
         return false;
     }
     
-    // Check for HTML tags
-    if (/<[^>]*>/g.test(comment)) {
-        errorEl.textContent = 'HTML tags are not allowed in comments.';
-        errorEl.style.display = 'block';
-        return false;
-    }
+    // Remove HTML tags
+    comment = comment.replace(/<[^>]*>/g, '');
+    commentEl.value = comment;
     
     errorEl.style.display = 'none';
     return true;
@@ -171,13 +168,9 @@ function setupCommentValidation() {
     
     if (commentEl && errorEl) {
         commentEl.addEventListener('input', function() {
-            // Check for HTML tags while typing
-            if (/<[^>]*>/g.test(this.value)) {
-                errorEl.textContent = 'HTML tags are not allowed in comments.';
-                errorEl.style.display = 'block';
-            } else {
-                errorEl.style.display = 'none';
-            }
+            // Remove HTML tags while typing
+            this.value = this.value.replace(/<[^>]*>/g, '');
+            errorEl.style.display = 'none';
         });
         
         // Add validation to the form

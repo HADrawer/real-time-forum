@@ -82,7 +82,7 @@ export function fetchAndRenderDirect() {
     }
 
     function validateMessageInput(showError = true) {
-        const message = messageInput.value.trim();
+        let message = messageInput.value.trim();
         
         // Check if message is empty
         if (message === '') {
@@ -92,11 +92,9 @@ export function fetchAndRenderDirect() {
             return false;
         }
         
-        // Check for HTML tags
-        if (/<[^>]*>/g.test(message)) {
-            showMessageError('HTML tags are not allowed in messages.');
-            return false;
-        }
+        // Remove HTML tags
+        message = message.replace(/<[^>]*>/g, '');
+        messageInput.value = message;
         
         // Hide error message
         hideMessageError();
