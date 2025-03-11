@@ -2,7 +2,7 @@
 import { fetchAndRenderHomePage } from '../pages/home.js';
 import { fetchAndRenderRegister } from '../pages/register.js';
 import { fetchAndRenderLogin } from '../pages/login.js';
-import { fetchAndRenderCreate } from '../pages/create.js';
+import { fetchAndRenderCreatePost } from '../pages/create.js';
 import { fetchAndRenderDirect } from '../pages/direct.js';
 import { fetchAndRenderPost } from '../pages/post.js';
 import { renderNotFoundPage } from '../pages/notFound.js';
