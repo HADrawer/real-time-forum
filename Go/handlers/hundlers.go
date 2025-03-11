@@ -34,38 +34,76 @@ func RenderTemplate(w http.ResponseWriter, data interface{}) {
 }
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
-	
-	_, isLoggedIn := GetUserIDFromSession(r)
-	if !isLoggedIn {
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
-	}
-	pageData := make(map[string]interface{})
+    // Check if the user is logged in
+    _, isLoggedIn := GetUserIDFromSession(r)
+    if !isLoggedIn {
+        http.Redirect(w, r, "/login", http.StatusSeeOther)
+        return
+    }
 
-	pageData["IsLoggedIn"] = isLoggedIn
+    // Prepare page data
+    pageData := make(map[string]interface{})
+    pageData["IsLoggedIn"] = isLoggedIn
 
-	posts, err := database.GetAllPosts()
-	if err != nil {
-		http.Error(w, "Unable to load posts", http.StatusInternalServerError)
-		// RenderTemplate(w, "500", nil)   // 500
-		return
-	}
-	isExist := true
-	if posts == nil {
-		isExist = false
-	}
-	var postDetails []map[string]interface{}
-	for _, post := range posts {
-		postDetail := map[string]interface{}{
-			"Id":     post.ID,
-			"Author": post.Author,
-			"Title":  post.Title,
-		}
-		postDetails = append(postDetails, postDetail)
-	}
-	pageData["isExist"] = isExist
-	pageData["Posts"] = postDetails
+    // Fetch all posts
+    posts, err := database.GetAllPosts()
+    if err != nil {
+        http.Error(w, "Unable to load posts", http.StatusInternalServerError)
+        return
+    }
 
-	RenderTemplate(w, pageData)
+    // Filter posts by category if a category is specified
+    category := r.URL.Query().Get("category")
+    if category != "" {
+        posts = filterPostsByCategory(posts, category)
+    }
+
+    // Check if posts exist
+    isExist := true
+    if posts == nil {
+        isExist = false
+    }
+
+    // Prepare post details
+    var postDetails []map[string]interface{}
+    for _, post := range posts {
+        postDetail := map[string]interface{}{
+            "Id":       post.ID,
+            "Author":   post.Author,
+            "Title":    post.Title,
+            "Category": post.Category, // Include the category in the post details
+        }
+        postDetails = append(postDetails, postDetail)
+    }
+
+    // Fetch all categories
+    categories, err := database.GetAllCategories()
+    if err != nil {
+        http.Error(w, "Unable to load categories", http.StatusInternalServerError)
+        return
+    }
+
+    // Add data to the pageData map
+    pageData["isExist"] = isExist
+    pageData["Posts"] = postDetails
+    pageData["Categories"] = categories // Add categories to the page data
+
+    // Render the template with the page data
+    RenderTemplate(w, pageData)
+}
+
+// Helper function to filter posts by category
+func filterPostsByCategory(posts []database.Post, category string) []database.Post {
+    var filteredPosts []database.Post
+    for _, post := range posts {
+        for _, cat := range post.Category {
+            if cat.Name == category {
+                filteredPosts = append(filteredPosts, post)
+                break
+            }
+        }
+    }
+    return filteredPosts
 }
 func HomeDataHandler(w http.ResponseWriter, r *http.Request) {
 

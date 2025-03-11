@@ -4,13 +4,55 @@ export function fetchAndRenderHomePage() {
     link.rel = 'stylesheet';
     link.href = '/Css/home.css';
     document.head.appendChild(link);
-    
+
     // Fetch home page data
     fetch("/api/home-data")
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             const content = document.getElementById("content");
             if (content) {
+                // Extract posts and categories from the response
+                const posts = data.Posts || [];
+                const categories = data.Categories || [];
+
+                // Render the categories in the sidebar
+                const categoryList = categories.map(cat => `
+                    <li><a href="/?category=${cat.Name}" class="category-link">${cat.Name}</a></li>
+                `).join('');
+
+                // Render the posts with real categories
+                const postsHtml = posts.length > 0 ? posts.map(post => {
+                    const categories = post.Category ? post.Category.map(cat => cat.Name).join(', ') : 'Uncategorized';
+                    return `
+                        <div class="content">
+                            <div class="infoStupid">
+                                <a href="/Post?id=${post.ID}"><h3>${post.Title}</h3></a>
+                                <p>Posted by ${post.Author}</p>
+                                <div class="post-meta">
+                                    <span class="timestamp">${getRandomTimestamp()}</span>
+                                    <div class="categories-tags">
+                                        <span class="category-tag">${categories}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="stats">
+                                <span class="reply-count">${Math.floor(Math.random() * 50)}</span>
+                                <span class="reply-label">replies</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('') : `
+                    <div class="no-posts">
+                        <h1>No posts found. Be the first to create a discussion!</h1>
+                    </div>
+                `;
+
+                // Render the entire content
                 content.innerHTML = `
                     <!-- Welcome Banner -->
                     <div class="welcome-banner">
@@ -24,15 +66,7 @@ export function fetchAndRenderHomePage() {
                             <h3>Categories</h3>
                             <ul>
                                 <li><a href="/" class="active">All Topics</a></li>
-                                <li><a href="/?category=Technology">Technology</a></li>
-                                <li><a href="/?category=Sports">Sports</a></li>
-                                <li><a href="/?category=Entertainment">Entertainment</a></li>
-                                <li><a href="/?category=Science">Science</a></li>
-                                <li><a href="/?category=Business">Business</a></li>
-                                <li><a href="/?category=Health">Health</a></li>
-                                <li><a href="/?category=Food">Food</a></li>
-                                <li><a href="/?category=Travel">Travel</a></li>
-                                <li><a href="/?category=Art">Art</a></li>
+                                ${categoryList}
                             </ul>
                         </div>
                         
@@ -50,66 +84,97 @@ export function fetchAndRenderHomePage() {
                                 </div>
                             </div>
                             
-                            ${data.Posts && data.Posts.length > 0 ? data.Posts.map(post => {
-                                // Generate random values for demo purposes
-                                const timestamp = getRandomTimestamp();
-                                const categories = getRandomCategories();
-                                const replyCount = Math.floor(Math.random() * 50);
-                                
-                                return `
-                                <div class="content">
-                                    <div class="infoStupid">
-                                        <a href="/Post?id=${post.ID}"><h3>${post.Title}</h3></a>
-                                        <p>Posted by ${post.Author}</p>
-                                        <div class="post-meta">
-                                            <span class="timestamp">${timestamp}</span>
-                                            <div class="categories-tags">
-                                                ${categories.map(cat => `<span class="category-tag">${cat}</span>`).join('')}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="stats">
-                                        <span class="reply-count">${replyCount}</span>
-                                        <span class="reply-label">replies</span>
-                                    </div>
-                                </div>
-                            `}).join('') : `
-                                <div class="no-posts">
-                                    <h1>No posts found. Be the first to create a discussion!</h1>
-                                </div>
-                            `}
+                            ${postsHtml}
                         </div>
                     </div>
                 `;
-                
+
+                // Add event listeners for category links
+                document.querySelectorAll('.category-link').forEach(link => {
+                    link.addEventListener('click', function(event) {
+                        event.preventDefault();
+                        const category = this.getAttribute('href').split('=')[1];
+                        filterPostsByCategory(category);
+                    });
+                });
+
                 // Add event listener for sorting
                 document.getElementById('sort-by')?.addEventListener('change', function() {
                     sortPosts(this.value);
                 });
             }
         })
-        .catch(error => console.error("Error fetching home page data:", error));
+        .catch(error => {
+            console.error("Error fetching home page data:", error);
+            // Display an error message to the user
+            const content = document.getElementById("content");
+            if (content) {
+                content.innerHTML = `
+                    <div class="error-message">
+                        <h1>Failed to load posts. Please try again later.</h1>
+                    </div>
+                `;
+            }
+        });
+}
+
+// Function to filter posts by category
+function filterPostsByCategory(category) {
+    fetch(`/api/home-data?category=${category}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const filteredPosts = data.Posts || [];
+            const postsHtml = filteredPosts.length > 0 ? filteredPosts.map(post => {
+                const categories = post.Category ? post.Category.map(cat => cat.Name).join(', ') : 'Uncategorized';
+                return `
+                    <div class="content">
+                        <div class="infoStupid">
+                            <a href="/Post?id=${post.ID}"><h3>${post.Title}</h3></a>
+                            <p>Posted by ${post.Author}</p>
+                            <div class="post-meta">
+                                <span class="timestamp">${getRandomTimestamp()}</span>
+                                <div class="categories-tags">
+                                    <span class="category-tag">${categories}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stats">
+                            <span class="reply-count">${Math.floor(Math.random() * 50)}</span>
+                            <span class="reply-label">replies</span>
+                        </div>
+                    </div>
+                `;
+            }).join('') : `
+                <div class="no-posts">
+                    <h1>No posts found in this category.</h1>
+                </div>
+            `;
+
+            document.querySelector('.posts').innerHTML = postsHtml;
+        })
+        .catch(error => {
+            console.error("Error filtering posts by category:", error);
+            // Display an error message to the user
+            const postsSection = document.querySelector('.posts');
+            if (postsSection) {
+                postsSection.innerHTML = `
+                    <div class="error-message">
+                        <h1>Failed to filter posts. Please try again later.</h1>
+                    </div>
+                `;
+            }
+        });
 }
 
 // Helper function to generate random timestamps for demo
 function getRandomTimestamp() {
     const periods = ["Just now", "5 min ago", "10 min ago", "30 min ago", "1 hour ago", "3 hours ago", "8 hours ago", "Yesterday", "2 days ago"];
     return periods[Math.floor(Math.random() * periods.length)];
-}
-
-// Helper function to generate random categories for demo
-function getRandomCategories() {
-    const allCategories = ["Technology", "Sports", "Entertainment", "Science", "Business", "Health", "Food", "Travel", "Art"];
-    const numCategories = Math.floor(Math.random() * 2) + 1; // 1 or 2 categories
-    const categories = [];
-    
-    for (let i = 0; i < numCategories; i++) {
-        const randIndex = Math.floor(Math.random() * allCategories.length);
-        categories.push(allCategories[randIndex]);
-        allCategories.splice(randIndex, 1); // Remove to avoid duplicates
-    }
-    
-    return categories;
 }
 
 // Function to sort posts (for demo purposes)
