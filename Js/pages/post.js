@@ -1,5 +1,10 @@
-
 export async function fetchAndRenderPost() {
+      // Dynamically load the post.css file
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = '/Css/post.css';
+      document.head.appendChild(link);
+      
     const urlParams = new URLSearchParams(window.location.search);
     const postId = urlParams.get('id');
     if (!postId) {
@@ -41,13 +46,12 @@ export async function fetchAndRenderPost() {
                             <input name="PostID" value="${data.Post.ID}" type="hidden">
                             <textarea name="PostComment" id="Comment" placeholder="Write Your Comment here" maxlength="250" required></textarea><br>
                             <div id="CommentError" style="color:red; display:none;"></div>
-                            <input type="submit" class="button-primary" value="Add Comment">
+                            <input type="submit" class="button-primary post" value="Add Comment">
                         </form>
                         <hr class="divider">
                         <h2>Comments</h2>
                         <ul>
-                            ${data.Comments && data.Comments.length > 0 ? data.Comments.map(comment =>
-                                `
+                            ${data.Comments && data.Comments.length > 0 ? data.Comments.map(comment => `
                                 <div class="Post-box">
                                     <h3>${comment.Author}</h3>
                                     <div class="comment-content" onclick="this.classList.toggle('expanded');">
