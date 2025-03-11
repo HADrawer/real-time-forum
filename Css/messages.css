@@ -275,6 +275,28 @@ main#content {
     background-color: #ddd;
     cursor: not-allowed;
 }
+.MessageContent h5 {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.MessageContent h5 time {
+    font-size: 12px;
+    color: #666;
+    margin-left: 5px;
+    font-style: italic;
+   
+    
+}
+
+.MessageContent.sent h5 time {
+    color: #e0e0e0; /* Lighter color for sent messages */
+}
+
+.MessageContent.received h5 time {
+    color: #999; /* Darker color for received messages */
+}
 
 /* Footer styling */
 footer {

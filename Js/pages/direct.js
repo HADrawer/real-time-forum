@@ -150,100 +150,116 @@ export function fetchAndRenderDirect() {
         // Add a class based on whether this is a sent or received message
         if (msg.sender_id === currentUserID) {
             messageDiv.classList.add('sent');
-            messageDiv.innerHTML = `<h5><strong>You:</strong> ${sanitizedMessage} ${sanitizedTime ? ', ' + sanitizedTime : ''}</h5>`;
+            messageDiv.innerHTML = `
+                <h5>
+                    <span><strong>You:</strong> ${sanitizedMessage}</span>
+                    <time>${sanitizedTime}</time>
+                </h5>`;
         } else {
             messageDiv.classList.add('received');
-            messageDiv.innerHTML = `<h5><strong>${sanitizedUsername}:</strong> ${sanitizedMessage}</h5>`;
+            messageDiv.innerHTML = `
+                <h5>
+                    <span><strong>${sanitizedUsername}:</strong> ${sanitizedMessage}</span>
+                    <time>${sanitizedTime}</time>
+                </h5>`;
         }
         
         messagesContainer.appendChild(messageDiv);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
+    
+    function fetchMessages(receiver_id) {
+        fetch(`http://${window.location.hostname}:8080/messages?receiver_id=${receiver_id}`)
+            .then(response => response.json())
+            .then(messages => {
+                const messagesContainer = document.getElementById('messages');
+                messagesContainer.innerHTML = ''; // Clear previous messages
+    
+                if (Array.isArray(messages) && messages.length > 0) {
+                    messages.forEach(msg => {
+                        const messageDiv = document.createElement('div');
+                        messageDiv.classList.add('MessageContent');
+                        
+                        const date = new Date(msg.Created_at);
+                        
+                        const day = date.getDate();
+                        const month = date.getMonth() + 1;  // Months are 0-indexed, so we add 1
+                        const hour = date.getHours();
+                        const minute = date.getMinutes();
+    
+                        const formattedDate = `${day < 10 ? '0' + day : day}/${month < 10 ? '0' + month : month} ${hour < 10 ? '0' + hour : hour}:${minute < 10 ? '0' + minute : minute}`;
+    
+                        // Sanitize content to prevent XSS
+                        const sanitizedContent = sanitizeHtml(msg.Content);
+                        const sanitizedUsername = sanitizeHtml(msg.Username || '');
+                        
+                        if (msg.Sender_ID === currentUserID && msg.Receiver_ID === currentReceiverId) {
+                            messageDiv.classList.add('sent');
+                            messageDiv.innerHTML = `
+                                <h5>
+                                    <span><strong>You:</strong> ${sanitizedContent}</span>
+                                    <time>${formattedDate}</time>
+                                </h5>`;
+                        } else if (msg.Receiver_ID === currentUserID) {
+                            messageDiv.classList.add('received');
+                            messageDiv.innerHTML = `
+                                <h5>
+                                    <span><strong>${sanitizedUsername}:</strong> ${sanitizedContent}</span>
+                                    <time>${formattedDate}</time>
+                                </h5>`;
+                        }
+                        messagesContainer.appendChild(messageDiv);
+                    });
+                } else {
+                    const noMessagesDiv = document.createElement('div');
+                    noMessagesDiv.classList.add('MessageContent');
+                    noMessagesDiv.innerHTML = '<h5>No messages available</h5>';
+                    messagesContainer.appendChild(noMessagesDiv);
+                }
+    
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            })
+            .catch(error => {
+                console.error('Error fetching messages:', error);
+                const messagesContainer = document.getElementById('messages');
+                messagesContainer.innerHTML = '<h5>Error fetching messages</h5>';
+            });
+    }
+
+    function updateUserList(users) {
+        const userList = document.getElementById("userList");
+        userList.innerHTML = ""; // Clear the current user list
+
+        users.forEach(userObj => {
+            const user = userObj.user;
+            const lastMessage = userObj.lastMessage;
+
+            const userItem = document.createElement("li");
+            // Sanitize the username
+            userItem.textContent = sanitizeHtml(user.Username);
+
+            userItem.onclick = () => {
+                currentReceiverId = user.ID;
+                document.getElementById("chatWith").textContent = sanitizeHtml(user.Username);
+                document.getElementById("ChatArea").classList.remove("hidden");
+                fetchMessages(currentReceiverId);
+            };
+
+            userList.appendChild(userItem);
+        });
+    }
+
+    // Function to sanitize HTML and prevent XSS
+    function sanitizeHtml(text) {
+        if (!text) return '';
+        
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
 
     history.pushState({}, "direct", "/Direct");
-}
-
-function fetchMessages(receiver_id) {
-    fetch(`http://${window.location.hostname}:8080/messages?receiver_id=${receiver_id}`)
-        .then(response => response.json())
-        .then(messages => {
-            const messagesContainer = document.getElementById('messages');
-            messagesContainer.innerHTML = ''; // Clear previous messages
-
-            if (Array.isArray(messages) && messages.length > 0) {
-                messages.forEach(msg => {
-                    const messageDiv = document.createElement('div');
-                    messageDiv.classList.add('MessageContent');
-                    
-                    const date = new Date(msg.Created_at);
-                    
-                    const day = date.getDate();
-                    const month = date.getMonth() + 1;  // Months are 0-indexed, so we add 1
-                    const hour = date.getHours();
-                    const minute = date.getMinutes();
-
-                    const formattedDate = `${day < 10 ? '0' + day : day}/${month < 10 ? '0' + month : month} ${hour < 10 ? '0' + hour : hour}:${minute < 10 ? '0' + minute : minute}`;
-
-                    // Sanitize content to prevent XSS
-                    const sanitizedContent = sanitizeHtml(msg.Content);
-                    const sanitizedUsername = sanitizeHtml(msg.Username || '');
-                    
-                    if (msg.Sender_ID === currentUserID && msg.Receiver_ID === currentReceiverId) {
-                        messageDiv.classList.add('sent');
-                        messageDiv.innerHTML = `<h5><strong>You:</strong> ${sanitizedContent} , ${formattedDate}</h5>`;
-                    } else if (msg.Receiver_ID === currentUserID) {
-                        messageDiv.classList.add('received');
-                        messageDiv.innerHTML = `<h5><strong>${sanitizedUsername}:</strong> ${sanitizedContent}, ${formattedDate}</h5>`;
-                    }
-                    messagesContainer.appendChild(messageDiv);
-                });
-            } else {
-                const noMessagesDiv = document.createElement('div');
-                noMessagesDiv.classList.add('MessageContent');
-                noMessagesDiv.innerHTML = '<h5>No messages available</h5>';
-                messagesContainer.appendChild(noMessagesDiv);
-            }
-
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        })
-        .catch(error => {
-            console.error('Error fetching messages:', error);
-            const messagesContainer = document.getElementById('messages');
-            messagesContainer.innerHTML = '<h5>Error fetching messages</h5>';
-        });
-}
-
-function updateUserList(users) {
-    const userList = document.getElementById("userList");
-    userList.innerHTML = ""; // Clear the current user list
-
-    users.forEach(userObj => {
-        const user = userObj.user;
-        const lastMessage = userObj.lastMessage;
-
-        const userItem = document.createElement("li");
-        // Sanitize the username
-        userItem.textContent = sanitizeHtml(user.Username);
-
-        userItem.onclick = () => {
-            currentReceiverId = user.ID;
-            document.getElementById("chatWith").textContent = sanitizeHtml(user.Username);
-            document.getElementById("ChatArea").classList.remove("hidden");
-            fetchMessages(currentReceiverId);
-        };
-
-        userList.appendChild(userItem);
-    });
-}
-
-// Function to sanitize HTML and prevent XSS
-function sanitizeHtml(text) {
-    if (!text) return '';
-    
-    return String(text)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
 }
