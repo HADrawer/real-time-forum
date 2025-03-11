@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sort"
 	"strconv"
 	"time"
 
@@ -90,30 +91,119 @@ func SendMessage(senderID int, receiverID int, username string, message string) 
 		log.Printf("Error Saving message " , err)
 	}
 
-	users := map[int]bool{senderID:true , receiverID:true}
+	users := map[int]bool{senderID: true, receiverID: true}
 	for userID := range users {
 		if conn, ok := clients[userID]; ok {
-			conn.WriteJSON(msg)
+			conn.WriteJSON(map[string]interface{}{
+				"type": "message",
+				"data": msg,
+			})
 		}
+	}
+
+	broadcastUserListUpdate()
+
+}
+
+func broadcastUserListUpdate() {
+	for userID, conn := range clients {
+		userList, err := GetUsersForClient(userID)
+		if err != nil {
+			log.Printf("Error fetching user list for client %d: %v", userID, err)
+            continue
+		}
+
+		err = conn.WriteJSON(map[string]interface{}{
+			"type": "userListUpdate",
+			"data": userList,
+		})
+		if err != nil {
+			log.Printf("Error sending user list update to %d: %v", userID, err)
+			conn.Close()
+			delete(clients, userID)
+		}
+		
+		
 	}
 
 }
 
-// func HandleMessages() {
-// 	for {
-// 		msg := <-broadcast
+func GetUsersForClient(userID int) (map[string]interface{}, error) {
+	users, err := database.GetAllUsers()
+    if err != nil {
+        return nil, err
+    }
+	
+	
+	var userListWithMessages []map[string]interface{}
+	for _, user := range users {
+		if user.ID != userID {
+			lastMessage , err := GetLastMessage(userID , user.ID)
+			if err != nil {
+				log.Println("Error fetching last message:", err)
+				continue
+				
+			}
+			userData := map[string]interface{}{
+				"user":	user,
+				"lastMessage": lastMessage,
+			}
+			userListWithMessages = append(userListWithMessages, userData)
+		}
+	}
 
-// 		for client := range clients {
-// 			err := client.WriteJSON(msg)
-// 			if err != nil {
-// 				log.Println(err)
-// 				client.Close()
-// 				delete(clients, client)
-// 			}
-// 		}
+	type userWithMessageStatus struct {
+		index int
+		hasMessage bool
+		messageTime time.Time
+		username string
+	}
 
-// 	}
-// }
+	userStatuses := make([]userWithMessageStatus, len(userListWithMessages))
+	for i , userData := range userListWithMessages {
+		status := userWithMessageStatus{
+			index: i,
+			hasMessage: false,
+			username: userData["user"].(database.User).Username,
+		}
+
+		if userData["lastMessage"] != nil {
+			if msg, ok := userData["lastMessage"].(*MessageJson); ok && msg != nil {
+				status.hasMessage = true
+				status.messageTime = msg.CreateTime
+			}
+		}
+		userStatuses[i] = status
+	}
+
+
+	sort.Slice(userStatuses , func(i, j int) bool {
+		if userStatuses[i].hasMessage && userStatuses[j].hasMessage {
+			return userStatuses[i].messageTime.After(userStatuses[j].messageTime)
+		}
+
+		if userStatuses[i].hasMessage {
+			return true
+		}
+		if userStatuses[j].hasMessage {
+			return false
+		}
+		
+		
+	
+		return userStatuses[i].username < userStatuses[j].username
+	})
+	sortedList := make([]map[string]interface{}, len(userListWithMessages))
+	for i, status := range userStatuses {
+		sortedList[i] = userListWithMessages[status.index]
+	}
+	return map[string]interface{}{
+		"users": sortedList,
+		"sender_id": userID,
+	} , nil
+}
+
+
 
 func GetUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := database.GetAllUsers()
@@ -121,16 +211,86 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unable to fetch users", http.StatusInternalServerError)
 		return
 	}
+
 	userID, _ := GetUserIDFromSession(r)
+	
+	var userListWithMessages []map[string]interface{}
+	for _, user := range users {
+		if user.ID != userID {
+			lastMessage , err := GetLastMessage(userID , user.ID)
+			if err != nil {
+				log.Println("Error fetching last message:", err)
+				continue
+				
+			}
+			userData := map[string]interface{}{
+				"user":	user,
+				"lastMessage": lastMessage,
+			}
+			userListWithMessages = append(userListWithMessages, userData)
+		}
+	}
+
+
+	type userWithMessageStatus struct {
+		index int
+		hasMessage bool
+		messageTime time.Time
+		username string
+	}
+
+	userStatuses := make([]userWithMessageStatus, len(userListWithMessages))
+	for i , userData := range userListWithMessages {
+		status := userWithMessageStatus{
+			index: i,
+			hasMessage: false,
+			username: userData["user"].(database.User).Username,
+		}
+
+		if userData["lastMessage"] != nil {
+			if msg, ok := userData["lastMessage"].(*MessageJson); ok && msg != nil {
+				status.hasMessage = true
+				status.messageTime = msg.CreateTime
+			}
+		}
+		userStatuses[i] = status
+	}
+
+
+	sort.Slice(userStatuses , func(i, j int) bool {
+		if userStatuses[i].hasMessage && userStatuses[j].hasMessage {
+			return userStatuses[i].messageTime.After(userStatuses[j].messageTime)
+		}
+
+		if userStatuses[i].hasMessage {
+			return true
+		}
+		if userStatuses[j].hasMessage {
+			return false
+		}
+		
+		
+	
+		return userStatuses[i].username < userStatuses[j].username
+	})
+	sortedList := make([]map[string]interface{}, len(userListWithMessages))
+	for i, status := range userStatuses {
+		sortedList[i] = userListWithMessages[status.index]
+	}
+
 	ALLUsers := map[string]interface{}{
-		"users": users,
+		"users": sortedList,
 		"sender_id": userID,
 	}
+
 	// Send the list of users as a JSON response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(ALLUsers)
 }
+
+
+
 
 func LoadMessages(w http.ResponseWriter,r *http.Request) {
 	userID, _ := GetUserIDFromSession(r)
@@ -143,4 +303,26 @@ func LoadMessages(w http.ResponseWriter,r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(messages)
+}
+// GetLastMessage fetches the last message between userID and the target user
+func GetLastMessage(userID, targetID int) (*MessageJson, error) {
+	messages, err := database.GetMessages(userID, targetID)
+	if err != nil {
+		return nil, err
+	}
+
+
+	if len(messages) > 0 {
+		lastMessage := messages[len(messages)-1]
+
+		return &MessageJson{
+			ID:         lastMessage.ID,
+			SenderID:   lastMessage.Sender_ID,
+			ReceiverID: lastMessage.Receiver_ID,
+			Username:   lastMessage.Username,
+			Message:    lastMessage.Content,
+			CreateTime: lastMessage.Created_at,
+		}, nil
+	}
+	return nil, nil // No messages found
 }

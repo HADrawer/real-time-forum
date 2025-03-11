@@ -198,17 +198,9 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.Method == http.MethodGet {
-		// Categories, _ := database.GetAllCategories()
 		pageData := make(map[string]interface{})
-		// var postDetails []map[string]interface{}
-		// for _, Category := range Categories {
-		// 	postDetail := map[string]interface{}{
-		// 		"Category": Category.Name,
-		// 	}
-		// 	postDetails = append(postDetails, postDetail)
-		// }
+		
 		pageData["IsLoggedIn"] = isLoggedIn
-		// pageData["Categories"] = postDetails
 
 		RenderTemplate(w, pageData)
 		return
@@ -221,7 +213,7 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		if title == "" || content == "" || len(categories) == 0 {
 
 			http.Error(w, "Bad request: Missing PostID or Comment", http.StatusBadRequest)
-
+			return
 		}
 
 		err := database.CreatePost(userID, title, content, stringCategories)

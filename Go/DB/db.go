@@ -57,9 +57,16 @@ type Message struct {
 	Sender_ID 	int
 	Receiver_ID int
 	Content		string
-	Created_at	string
+	Created_at	time.Time
 }
-
+// type Message struct {
+//     ID         int       `json:"id"`
+//     Username   string    `json:"username"`
+//     SenderID   int       `json:"sender_id"`
+//     ReceiverID int       `json:"receiver_id"`
+//     Content    string    `json:"message"`
+//     Created_at time.Time `json:"created_time"`
+// }
 func Init() {
 	var err error
 
@@ -352,11 +359,11 @@ func GetMessages(sender_id int , recevier_id int) ([]Message , error) {
 
 	for rows.Next() {
 		var message Message
-		var createdAt time.Time
-		if err := rows.Scan(&message.ID , &message.Sender_ID, &message.Receiver_ID ,&message.Username ,&message.Content , &createdAt); err != nil {
+		// var createdAt time.Time
+		if err := rows.Scan(&message.ID , &message.Sender_ID, &message.Receiver_ID ,&message.Username ,&message.Content , &message.Created_at); err != nil {
 			return nil , err
 		}
-		message.Created_at = createdAt.Format("2006-01-02 15:04:05")
+		// message.Created_at = createdAt.Format("2006-01-02 15:04:05")
 		messages = append(messages, message)
 	}
 	return messages , nil
