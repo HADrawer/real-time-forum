@@ -85,21 +85,46 @@ func SendMessage(senderID int, receiverID int, username string, message string) 
 		CreateTime: time.Now(),
 	}
 	
+	// users := map[int]bool{senderID: true, receiverID: true}
+	// for userID := range users {
+		// if conn, ok := clients[receiverID]; ok {
+		// 	conn.WriteJSON(map[string]interface{}{
+		// 		"type": "message",
+		// 		"data": msg,
+		// 	})
+		// }else{
+		// 	conn.WriteJSON(map[string]interface{}{
+		// 		"type": "offline",
+		// 		"data": "The user is offline currently",
+		// 	})
+		// 	return
+
+		// }
+	// }
+
+	if conn, ok := clients[receiverID]; ok {
+		conn.WriteJSON(map[string]interface{}{
+			"type": "message",
+			"data": msg,
+		})
+	}else {
+		if conn , ok := clients[senderID]; ok {
+			conn.WriteJSON(map[string]interface{}{
+				"type": "offline",
+				"data": "the user is offline , come later",
+			})
+			return
+		}
+	}
+
+
+
 
 	err := database.SaveMessage(msg.SenderID,msg.ReceiverID,msg.Username ,msg.Message,msg.CreateTime)
 	if err != nil {
 		log.Printf("Error Saving message " , err)
 	}
 
-	users := map[int]bool{senderID: true, receiverID: true}
-	for userID := range users {
-		if conn, ok := clients[userID]; ok {
-			conn.WriteJSON(map[string]interface{}{
-				"type": "message",
-				"data": msg,
-			})
-		}
-	}
 
 	broadcastUserListUpdate()
 

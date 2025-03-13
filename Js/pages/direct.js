@@ -61,6 +61,8 @@ export function fetchAndRenderDirect() {
             if ((currentReceiverId === msg.data.sender_id) || (currentReceiverId === msg.data.receiver_id && msg.data.sender_id === currentUserID)) {
                 displayMessage(msg.data);
             }
+        } else if (msg.type === "offline") {
+            alert(msg.data);
         }
     };
 
