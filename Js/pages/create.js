@@ -111,15 +111,9 @@ function setupFormValidation() {
 
 function validateField(field, errorElement, fieldType) {
     if (!field || !errorElement) return true;
-
-    let value = field.value.trim();
-
-    // Remove HTML tags
-    value = value.replace(/<[^>]*>/g, '');
-
-    // Update the field value to remove HTML tags
-    field.value = value;
-
+    
+    const value = field.value.trim();
+    
     // Check if field is empty
     if (value === '') {
         const fieldName = fieldType.charAt(0).toUpperCase() + fieldType.slice(1);
@@ -127,7 +121,20 @@ function validateField(field, errorElement, fieldType) {
         errorElement.style.display = 'block';
         return false;
     }
-
+    
+    // Min length validation
+    if (value.length < 3) {
+        errorElement.textContent = `${fieldType === 'title' ? 'Title' : 'Content'} must be at least 3 characters long.`;
+        errorElement.style.display = 'block';
+        return false;
+    }
+    
+    // Check for HTML tags
+    if (/<[^>]*>/g.test(value)) {
+        errorElement.textContent = 'HTML tags are not allowed.';
+        errorElement.style.display = 'block';
+        return false;
+    }
     
     // If all validations pass
     errorElement.style.display = 'none';
