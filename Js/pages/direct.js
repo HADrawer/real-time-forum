@@ -60,6 +60,8 @@ export function fetchAndRenderDirect() {
         } else if (msg.type === "message") {
             if ((currentReceiverId === msg.data.sender_id) || (currentReceiverId === msg.data.receiver_id && msg.data.sender_id === currentUserID)) {
                 displayMessage(msg.data);
+            } else {
+                showNotification(msg.data.username , msg.data.message);
             }
         } else if (msg.type === "offline") {
             alert(msg.data);
@@ -127,6 +129,18 @@ export function fetchAndRenderDirect() {
             messageInput.value = '';
             hideMessageError();
             fetchMessages(currentReceiverId);
+        }
+    }
+
+    function showNotification(title , message) {
+        if(Notification.permission === "granted") {
+            new Notification(title , {body : message});
+        }else if (Notification.permission !== "denied") {
+            Notification.requestPermission().then(permission => {
+                if ( permission === "granted") {
+                    new Notification(title , { body: message});
+                }
+            });
         }
     }
 
