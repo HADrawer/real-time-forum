@@ -32,8 +32,8 @@ export function fetchAndRenderDirect() {
     const messageInput = document.getElementById('messageInput');
     const messageError = document.getElementById('messageError');
     const sendMessageButton = document.getElementById('sendMessage');
-    const userList = document.getElementById('userList');
-    const chatWith = document.getElementById('chatWith');
+    // const userList = document.getElementById('userList');
+    // const chatWith = document.getElementById('chatWith');
     const chatVisible = document.getElementById('ChatArea');
     chatVisible.classList.add('hidden');
 
@@ -234,11 +234,20 @@ export function fetchAndRenderDirect() {
 
         users.forEach(userObj => {
             const user = userObj.user;
-            const lastMessage = userObj.lastMessage;
+            const isOnline = userObj.isOnline;
+
 
             const userItem = document.createElement("li");
-            // Sanitize the username
+            const userNameSpan = document.createElement("span");
             userItem.textContent = sanitizeHtml(user.Username);
+
+            if (isOnline) {
+                const onlineIndicator = document.createElement("span");
+                onlineIndicator.classList.add("online-indicator");
+                userItem.appendChild(onlineIndicator);
+            }
+
+            userItem.appendChild(userNameSpan);
 
             userItem.onclick = () => {
                 currentReceiverId = user.ID;

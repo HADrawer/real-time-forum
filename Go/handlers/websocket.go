@@ -55,15 +55,22 @@ func HandleConnections(w http.ResponseWriter, r *http.Request) {
 		conn.Close()
 		return
 	}
+
+	clients[userID] = conn
+	fmt.Println(user.Username, "connected")
+
+	broadcastUserListUpdate()
+
+
 	defer func() {
 
 		log.Println("Closing WebSocket connection")
 		delete(clients, userID)
 		conn.Close()
 
+		broadcastUserListUpdate()
+
 	}()
-	clients[userID] = conn
-	fmt.Println(user.Username, "connected")
 
 	for {
 		var msg MessageJson
@@ -85,22 +92,7 @@ func SendMessage(senderID int, receiverID int, username string, message string) 
 		CreateTime: time.Now(),
 	}
 	
-	// users := map[int]bool{senderID: true, receiverID: true}
-	// for userID := range users {
-		// if conn, ok := clients[receiverID]; ok {
-		// 	conn.WriteJSON(map[string]interface{}{
-		// 		"type": "message",
-		// 		"data": msg,
-		// 	})
-		// }else{
-		// 	conn.WriteJSON(map[string]interface{}{
-		// 		"type": "offline",
-		// 		"data": "The user is offline currently",
-		// 	})
-		// 	return
-
-		// }
-	// }
+	
 
 	if conn, ok := clients[receiverID]; ok {
 		conn.WriteJSON(map[string]interface{}{
@@ -162,6 +154,7 @@ func GetUsersForClient(userID int) (map[string]interface{}, error) {
 	
 	var userListWithMessages []map[string]interface{}
 	for _, user := range users {
+		
 		if user.ID != userID {
 			lastMessage , err := GetLastMessage(userID , user.ID)
 			if err != nil {
@@ -169,9 +162,14 @@ func GetUsersForClient(userID int) (map[string]interface{}, error) {
 				continue
 				
 			}
+			isOnline := false
+			if _, ok := clients[user.ID]; ok {
+				isOnline = true
+			}
 			userData := map[string]interface{}{
 				"user":	user,
 				"lastMessage": lastMessage,
+				"isOnline": isOnline,
 			}
 			userListWithMessages = append(userListWithMessages, userData)
 		}
@@ -248,9 +246,14 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 				continue
 				
 			}
+			isOnline := false
+			if _, ok := clients[user.ID]; ok {
+				isOnline = true
+			}
 			userData := map[string]interface{}{
 				"user":	user,
 				"lastMessage": lastMessage,
+				"isOnline": isOnline,
 			}
 			userListWithMessages = append(userListWithMessages, userData)
 		}
