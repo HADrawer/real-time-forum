@@ -112,8 +112,14 @@ func HomeDataHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unable to load posts", http.StatusInternalServerError)
 		return
 	}
+	categories , err := database.GetAllCategories()
+	if err != nil {
+		http.Error(w,"Unable to load Categories", http.StatusInternalServerError)
+		return
+	}
 	responseData := map[string]interface{}{
 		"Posts": posts,
+		"Categories": categories,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
