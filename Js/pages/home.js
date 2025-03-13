@@ -24,7 +24,7 @@ export function fetchAndRenderHomePage() {
                 const categoryList = categories.map(cat => `
                     <li><a href="/?category=${cat.Name}" class="category-link">${cat.Name}</a></li>
                 `).join('');
-
+                
                 // Render the posts with real categories
                 const postsHtml = posts.length > 0 ? posts.map(post => {
                     const categories = post.Category ? post.Category.map(cat => cat.Name).join(', ') : 'Uncategorized';

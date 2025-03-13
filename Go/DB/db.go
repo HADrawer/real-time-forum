@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -264,7 +265,7 @@ func CreatePost(userID int , title string, content string, categories string) er
 }
 func GetAllPosts() ([]Post, error) {
 	var posts []Post
-	rows , err := db.Query("SELECT id, user_id,title,content, author FROM posts")
+	rows , err := db.Query("SELECT id, user_id,title,content, author , category FROM posts")
 	if err != nil {
 		return nil, err
 	}
@@ -272,8 +273,17 @@ func GetAllPosts() ([]Post, error) {
 
 	for rows.Next() {
 		var post Post
-		if err := rows.Scan(&post.ID,&post.UserID,&post.Title,&post.Content,&post.Author); err != nil {
+		var categoriesStr string
+		if err := rows.Scan(&post.ID,&post.UserID,&post.Title,&post.Content,&post.Author, &categoriesStr); err != nil {
 			return nil,err
+		}
+		categoryNames := strings.Split(categoriesStr, ",")
+
+		for _, name := range categoryNames {
+			name = strings.TrimSpace(name)
+			if name != "" {
+				post.Category = append(post.Category, Category{Name: name})
+			}
 		}
 		posts = append(posts, post)
 	}
