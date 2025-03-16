@@ -29,7 +29,7 @@ export function fetchAndRenderHomePage() {
                 const postsHtml = posts.length > 0 ? posts.map(post => {
                     const categories = post.Category ? post.Category.map(cat => cat.Name).join(', ') : 'Uncategorized';
                     return `
-                        <div class="content">
+                        <div class="content-home">
                             <div class="infoStupid">
                                 <a href="/Post?id=${post.ID}"><h3>${post.Title}</h3></a>
                                 <p>Posted by ${post.Author}</p>
@@ -62,7 +62,7 @@ export function fetchAndRenderHomePage() {
                     
                     <div class="content-wrapper">
                         <!-- Left Sidebar -->
-                        <div class="sidebar">
+                        <div class="sidebar-home">
                             <h3>Categories</h3>
                             <ul>
                                 <li><a href="/" class="active">All Topics</a></li>
