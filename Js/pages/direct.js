@@ -221,6 +221,9 @@ export function fetchAndRenderDirect() {
                                 </h5>`;
                         } else if (msg.Receiver_ID === currentUserID) {
                             messageDiv.classList.add('received');
+                            if (msg.IsRead === 0){
+                                messageDiv.classList.add('unread');
+                            }
                             messageDiv.innerHTML = `
                                 <h5>
                                     <span><strong>${sanitizedUsername}:</strong> ${sanitizedContent}</span>
@@ -307,7 +310,7 @@ export function fetchAndRenderDirect() {
         });
 
     }
-    function markMessageAsReadUI(receivedId) {
+    function markMessageAsReadUI(receiverId) {
         const messagesContainer = document.getElementById('messages');
         const messages = messagesContainer.querySelectorAll('.MessageContent');
 

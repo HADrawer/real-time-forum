@@ -335,13 +335,15 @@ footer {
     margin-right: 5px;
 }
 
+.MessageContent.unread {
+    background-color: #ffebee; /* Light red background for unread messages */
+}
+
 .notification-indicator {
+    display: inline-block;
     width: 10px;
     height: 10px;
     background-color: red;
     border-radius: 50%;
-    display: inline-block;
     margin-left: 5px;
-    position: relative;
-    top: -2px;
 }
