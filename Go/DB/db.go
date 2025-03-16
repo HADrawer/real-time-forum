@@ -59,6 +59,7 @@ type Message struct {
 	Receiver_ID int
 	Content		string
 	Created_at	time.Time
+	IsRead 		int
 }
 // type Message struct {
 //     ID         int       `json:"id"`
@@ -361,7 +362,7 @@ func SaveMessage(senderID int , receiverID int , username string , content strin
 
 func GetMessages(sender_id int , recevier_id int) ([]Message , error) {
 	var messages []Message
-	rows , err := db.Query("SELECT id , sender_id , receiver_id , username , content , created_at FROM messages WHERE  (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)" , sender_id , recevier_id , recevier_id , sender_id)
+	rows , err := db.Query("SELECT id , sender_id , receiver_id , username , content , created_at , isRead FROM messages WHERE  (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)" , sender_id , recevier_id , recevier_id , sender_id)
 	if err != nil {
 		return nil , err
 	}
@@ -370,11 +371,16 @@ func GetMessages(sender_id int , recevier_id int) ([]Message , error) {
 	for rows.Next() {
 		var message Message
 		// var createdAt time.Time
-		if err := rows.Scan(&message.ID , &message.Sender_ID, &message.Receiver_ID ,&message.Username ,&message.Content , &message.Created_at); err != nil {
+		if err := rows.Scan(&message.ID , &message.Sender_ID, &message.Receiver_ID ,&message.Username ,&message.Content , &message.Created_at , &message.IsRead ); err != nil {
 			return nil , err
 		}
 		// message.Created_at = createdAt.Format("2006-01-02 15:04:05")
 		messages = append(messages, message)
 	}
 	return messages , nil
+}
+
+func MarkMessagesAsRead(senderID , receiverID int) error {
+	_,err := db.Exec(`UPDATE messages SET isRead = 1 WHERE sender_id = ? AND receiver_id = ? AND isRead = 0`, senderID,receiverID)
+	return err
 }

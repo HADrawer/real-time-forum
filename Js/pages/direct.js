@@ -65,6 +65,9 @@ export function fetchAndRenderDirect() {
             }
         } else if (msg.type === "offline") {
             alert(msg.data);
+        }else if (msg.type === "messagesRead") {
+            const receiverId = msg.data.receiver_id;
+            markMessageAsReadUI(receiverId);
         }
     };
 
@@ -249,12 +252,19 @@ export function fetchAndRenderDirect() {
         users.forEach(userObj => {
             const user = userObj.user;
             const isOnline = userObj.isOnline;
+            const lastMessage = userObj.lastMessage;
 
 
             const userItem = document.createElement("li");
             const userNameSpan = document.createElement("span");
             userItem.textContent = sanitizeHtml(user.Username);
 
+            if (lastMessage && (lastMessage.receiver_id === currentUserID) && lastMessage.isRead === 0)
+            {
+                const notificationIndicator = document.createElement("span");
+                notificationIndicator.classList.add("notification-indicator");
+                userItem.appendChild(notificationIndicator);
+            }
             if (isOnline) {
                 const onlineIndicator = document.createElement("span");
                 onlineIndicator.classList.add("online-indicator");
@@ -267,10 +277,56 @@ export function fetchAndRenderDirect() {
                 currentReceiverId = user.ID;
                 document.getElementById("chatWith").textContent = sanitizeHtml(user.Username);
                 document.getElementById("ChatArea").classList.remove("hidden");
+                markMessageAsRead(currentUserID, currentReceiverId)
+              
                 fetchMessages(currentReceiverId);
             };
 
             userList.appendChild(userItem);
+        });
+    }
+    function markMessageAsRead(senderId , receivedId){
+        const data = {
+            sender_id: senderId,
+            receiver_id: receivedId
+        };
+        fetch(`http://${window.location.hostname}:8080/messages/markAsRead`, {
+            method : 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Messages marked as read:', data);
+            markMessageAsReadUI(receivedId);
+        })
+        .catch(error => {
+            console.error('Error marking messages as read:', error);
+        });
+
+    }
+    function markMessageAsReadUI(receivedId) {
+        const messagesContainer = document.getElementById('messages');
+        const messages = messagesContainer.querySelectorAll('.MessageContent');
+
+        messages.forEach(messageDiv => {
+            if (messageDiv.classList.contains('received')&& currentReceiverId == receiverId) {
+
+                messageDiv.classList.remove('unread');
+            }
+        });
+
+        const userList = document.getElementById('userList');
+        const userItems = userList.querySelectorAll('li');
+        userItems.forEach(userItem => {
+            if (userItem.textContent === receiverId) {
+                const notificationIndicator = userItem.querySelector(".notification-indicator");
+                if (notificationIndicator) {
+                    notificationIndicator.remove();
+                }
+            }
         });
     }
 

@@ -24,6 +24,7 @@ type MessageJson struct {
 	Username   string    `json:"username"`
 	Message    string    `json:"message"`
 	CreateTime time.Time `json:"createdTime"`
+	IsRead	   int 		 `json:"isRead"`
 }
 type UserJson struct {
 	ID       int    `json:"id"`
@@ -350,7 +351,37 @@ func GetLastMessage(userID, targetID int) (*MessageJson, error) {
 			Username:   lastMessage.Username,
 			Message:    lastMessage.Content,
 			CreateTime: lastMessage.Created_at,
+			IsRead:		lastMessage.IsRead,
 		}, nil
 	}
 	return nil, nil // No messages found
+}
+
+func MarkMessagesAsRead(w http.ResponseWriter, r *http.Request) {
+	var data struct {
+		SenderID int `json:"sender_id"`
+		ReceiverID int `json:"receiver_id"`
+	}
+	err := json.NewDecoder(r.Body).Decode(&data)
+	if err != nil {
+		http.Error(w, "Invalid request data", http.StatusBadRequest)
+		return
+	}
+
+	
+	if conn, ok := clients[data.SenderID]; ok {
+		conn.WriteJSON(map[string]interface{}{
+			"type": "messagesRead",
+			"data": map[string]interface{}{
+				"receiver_id" : data.ReceiverID,
+			},
+		})
+	}
+	
+	err = database.MarkMessagesAsRead(data.SenderID, data. ReceiverID)
+	if err != nil {
+		http.Error(w, "Error marking messages as read", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }

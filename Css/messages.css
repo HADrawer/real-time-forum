@@ -334,3 +334,14 @@ footer {
     border-radius: 50%;
     margin-right: 5px;
 }
+
+.notification-indicator {
+    width: 10px;
+    height: 10px;
+    background-color: red;
+    border-radius: 50%;
+    display: inline-block;
+    margin-left: 5px;
+    position: relative;
+    top: -2px;
+}
