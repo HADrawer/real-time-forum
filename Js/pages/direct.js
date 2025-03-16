@@ -100,7 +100,7 @@ export function fetchAndRenderDirect() {
         }
         
         // Remove HTML tags
-        message = message.replace(/<[^>]*>/g, '');
+        
         messageInput.value = message;
         
         // Hide error message
@@ -162,25 +162,40 @@ export function fetchAndRenderDirect() {
         messageDiv.classList.add('MessageContent');
         
         // Sanitize the message content to prevent XSS
-        const sanitizedMessage = sanitizeHtml(msg.message);
-        const sanitizedTime = msg.createdTime ? sanitizeHtml(msg.createdTime) : '';
-        const sanitizedUsername = msg.username ? sanitizeHtml(msg.username) : '';
+        const sanitizedMessage = msg.message;
+        const sanitizedTime = msg.createdTime ? msg.createdTime : '';
+        const sanitizedUsername = msg.username ? msg.username : '';
         
         // Add a class based on whether this is a sent or received message
-        if (msg.sender_id === currentUserID) {
+        // Create the message content
+        const h5 = document.createElement('h5');
+        const span = document.createElement('span');
+        const strong = document.createElement('strong');
+        const time = document.createElement('time');
+
+        // Set innerHTML for the <strong> element
+        strong.innerText = `${sanitizedUsername}:`;
+        strong.innerText = ` ${sanitizedContent}`
+        // Set innerText for the sanitized content
+        span.appendChild(strong);
+        // span.appendChild(document.createTextNode(` ${sanitizedContent}`));
+
+        // Set the formatted date
+        time.innerText = formattedDate;
+
+        // Append elements to the message
+        h5.appendChild(span);
+        h5.appendChild(time);
+        messageDiv.appendChild(h5);
+
+        // Add classes based on message type
+        if (msg.Sender_ID === currentUserID && msg.Receiver_ID === currentReceiverId) {
             messageDiv.classList.add('sent');
-            messageDiv.innerHTML = `
-                <h5>
-                    <span><strong>You:</strong> ${sanitizedMessage}</span>
-                    <time>${sanitizedTime}</time>
-                </h5>`;
-        } else {
+        } else if (msg.Receiver_ID === currentUserID) {
             messageDiv.classList.add('received');
-            messageDiv.innerHTML = `
-                <h5>
-                    <span><strong>${sanitizedUsername}:</strong> ${sanitizedMessage}</span>
-                    <time>${sanitizedTime}</time>
-                </h5>`;
+            if (msg.IsRead === 0) {
+                messageDiv.classList.add('unread'); // Add unread class for unread messages
+            }
         }
         
         messagesContainer.appendChild(messageDiv);
@@ -198,9 +213,9 @@ export function fetchAndRenderDirect() {
                     messages.forEach(msg => {
                         const messageDiv = document.createElement('div');
                         messageDiv.classList.add('MessageContent');
-                        
+    
                         const date = new Date(msg.Created_at);
-                        
+    
                         const day = date.getDate();
                         const month = date.getMonth() + 1;  // Months are 0-indexed, so we add 1
                         const hour = date.getHours();
@@ -209,27 +224,40 @@ export function fetchAndRenderDirect() {
                         const formattedDate = `${day < 10 ? '0' + day : day}/${month < 10 ? '0' + month : month} ${hour < 10 ? '0' + hour : hour}:${minute < 10 ? '0' + minute : minute}`;
     
                         // Sanitize content to prevent XSS
-                        const sanitizedContent = sanitizeHtml(msg.Content);
-                        const sanitizedUsername = sanitizeHtml(msg.Username || '');
-                        
+                        const sanitizedContent = msg.Content;
+                        const sanitizedUsername = msg.Username || '';
+    
+                        // Create the message content
+                        const h5 = document.createElement('h5');
+                        const span = document.createElement('span');
+                        const strong = document.createElement('strong');
+                        const time = document.createElement('time');
+    
+                        // Set innerHTML for the <strong> element
+                        strong.innerText = `${sanitizedUsername}:`;
+                        strong.innerText = ` ${sanitizedContent}`
+                        // Set innerText for the sanitized content
+                        span.appendChild(strong);
+                        // span.appendChild(document.createTextNode(` ${sanitizedContent}`));
+    
+                        // Set the formatted date
+                        time.innerText = formattedDate;
+    
+                        // Append elements to the message
+                        h5.appendChild(span);
+                        h5.appendChild(time);
+                        messageDiv.appendChild(h5);
+    
+                        // Add classes based on message type
                         if (msg.Sender_ID === currentUserID && msg.Receiver_ID === currentReceiverId) {
                             messageDiv.classList.add('sent');
-                            messageDiv.innerHTML = `
-                                <h5>
-                                    <span><strong>You:</strong> ${sanitizedContent}</span>
-                                    <time>${formattedDate}</time>
-                                </h5>`;
                         } else if (msg.Receiver_ID === currentUserID) {
                             messageDiv.classList.add('received');
-                            if (msg.IsRead === 0){
-                                messageDiv.classList.add('unread');
+                            if (msg.IsRead === 0) {
+                                messageDiv.classList.add('unread'); // Add unread class for unread messages
                             }
-                            messageDiv.innerHTML = `
-                                <h5>
-                                    <span><strong>${sanitizedUsername}:</strong> ${sanitizedContent}</span>
-                                    <time>${formattedDate}</time>
-                                </h5>`;
                         }
+    
                         messagesContainer.appendChild(messageDiv);
                     });
                 } else {
@@ -248,6 +276,66 @@ export function fetchAndRenderDirect() {
             });
     }
 
+    // function fetchMessages(receiver_id) {
+    //     fetch(`http://${window.location.hostname}:8080/messages?receiver_id=${receiver_id}`)
+    //         .then(response => response.json())
+    //         .then(messages => {
+    //             const messagesContainer = document.getElementById('messages');
+    //             messagesContainer.innerHTML = ''; // Clear previous messages
+    
+    //             if (Array.isArray(messages) && messages.length > 0) {
+    //                 messages.forEach(msg => {
+    //                     const messageDiv = document.createElement('div');
+    //                     messageDiv.classList.add('MessageContent');
+                        
+    //                     const date = new Date(msg.Created_at);
+                        
+    //                     const day = date.getDate();
+    //                     const month = date.getMonth() + 1;  // Months are 0-indexed, so we add 1
+    //                     const hour = date.getHours();
+    //                     const minute = date.getMinutes();
+    
+    //                     const formattedDate = `${day < 10 ? '0' + day : day}/${month < 10 ? '0' + month : month} ${hour < 10 ? '0' + hour : hour}:${minute < 10 ? '0' + minute : minute}`;
+    
+    //                     // Sanitize content to prevent XSS
+    //                     const sanitizedContent = sanitizeHtml(msg.Content);
+    //                     const sanitizedUsername = sanitizeHtml(msg.Username || '');
+                        
+    //                     if (msg.Sender_ID === currentUserID && msg.Receiver_ID === currentReceiverId) {
+    //                         messageDiv.classList.add('sent');
+    //                         messageDiv.innerHTML = `
+    //                             <h5>
+    //                                 <span><strong>You:</strong> ${sanitizedContent}</span>
+    //                                 <time>${formattedDate}</time>
+    //                             </h5>`;
+    //                     } else if (msg.Receiver_ID === currentUserID) {
+    //                         messageDiv.classList.add('received');
+    //                         if (msg.IsRead === 0){
+    //                             messageDiv.classList.add('unread');
+    //                         }
+    //                         messageDiv.innerHTML = `
+    //                             <h5>
+    //                                 <span><strong>${sanitizedUsername}:</strong> ${sanitizedContent}</span>
+    //                                 <time>${formattedDate}</time>
+    //                             </h5>`;
+    //                     }
+    //                     messagesContainer.appendChild(messageDiv);
+    //                 });
+    //             } else {
+    //                 const noMessagesDiv = document.createElement('div');
+    //                 noMessagesDiv.classList.add('MessageContent');
+    //                 noMessagesDiv.innerHTML = '<h5>No messages available</h5>';
+    //                 messagesContainer.appendChild(noMessagesDiv);
+    //             }
+    
+    //             messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    //         })
+    //         .catch(error => {
+    //             console.error('Error fetching messages:', error);
+    //             const messagesContainer = document.getElementById('messages');
+    //             messagesContainer.innerHTML = '<h5>Error fetching messages</h5>';
+    //         });
+    // }
     function updateUserList(users) {
         const userList = document.getElementById("userList");
         userList.innerHTML = ""; // Clear the current user list
@@ -260,7 +348,7 @@ export function fetchAndRenderDirect() {
 
             const userItem = document.createElement("li");
             const userNameSpan = document.createElement("span");
-            userItem.textContent = sanitizeHtml(user.Username);
+            userItem.textContent = user.Username;
 
             if (lastMessage && (lastMessage.receiver_id === currentUserID) && lastMessage.isRead === 0)
             {
@@ -278,7 +366,7 @@ export function fetchAndRenderDirect() {
 
             userItem.onclick = () => {
                 currentReceiverId = user.ID;
-                document.getElementById("chatWith").textContent = sanitizeHtml(user.Username);
+                document.getElementById("chatWith").textContent = user.Username;
                 document.getElementById("ChatArea").classList.remove("hidden");
                 markMessageAsRead(currentUserID, currentReceiverId)
               
@@ -334,16 +422,7 @@ export function fetchAndRenderDirect() {
     }
 
     // Function to sanitize HTML and prevent XSS
-    function sanitizeHtml(text) {
-        if (!text) return '';
-        
-        return String(text)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
+   
 
     history.pushState({}, "direct", "/Direct");
 }
