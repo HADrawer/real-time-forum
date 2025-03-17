@@ -367,21 +367,26 @@ func MarkMessagesAsRead(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request data", http.StatusBadRequest)
 		return
 	}
-
 	
-	err = database.MarkMessagesAsRead(data.SenderID, data. ReceiverID)
-	if err != nil {
-		http.Error(w, "Error marking messages as read", http.StatusInternalServerError)
-		return
-	}
+		
 	
-	if conn, ok := clients[data.SenderID]; ok {
-		conn.WriteJSON(map[string]interface{}{
-			"type": "messagesRead",
-			"data": map[string]interface{}{
-				"receiver_id" : data.ReceiverID,
-			},
-		})
-	}
+	
+		if conn, ok := clients[data.ReceiverID]; ok {
+			conn.WriteJSON(map[string]interface{}{
+				"type": "messagesRead",
+				"data": map[string]interface{}{
+					"receiver_id" : data.ReceiverID,
+				},
+			})
+		}else {
+			return
+		}
+		err = database.MarkMessagesAsRead(data.SenderID, data. ReceiverID)
+		if err != nil {
+			http.Error(w, "Error marking messages as read", http.StatusInternalServerError)
+			return
+		}
+	
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status":"success"})
 }

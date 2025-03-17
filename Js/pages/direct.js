@@ -68,6 +68,8 @@ export function fetchAndRenderDirect() {
         }else if (msg.type === "messagesRead") {
             const receiverId = msg.data.receiver_id;
             markMessageAsReadUI(receiverId);
+            fetchUsersAndUpdateList()
+
         }
     };
 
@@ -160,13 +162,23 @@ export function fetchAndRenderDirect() {
     function displayMessage(msg) {
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('MessageContent');
-        
-        // Sanitize the message content to prevent XSS
-        const sanitizedMessage = msg.message;
-        const sanitizedTime = msg.createdTime ? msg.createdTime : '';
-        const sanitizedUsername = msg.username ? msg.username : '';
-        
-        // Add a class based on whether this is a sent or received message
+
+        const date = new Date(msg.createdTime);
+
+        const day = date.getDate();
+        const month = date.getMonth() + 1;  // Months are 0-indexed, so we add 1
+        const hour = date.getHours();
+        const minute = date.getMinutes();
+
+        const formattedDate = `${day < 10 ? '0' + day : day}/${month < 10 ? '0' + month : month} ${hour < 10 ? '0' + hour : hour}:${minute < 10 ? '0' + minute : minute}`;
+
+        // Sanitize content to prevent XSS
+        const sanitizedContent = msg.message;
+        const sanitizedUsername = msg.username || '';
+
+        // const sanitizedMessage = msg.message;
+        // const sanitizedTime = msg.createdTime ? msg.createdTime : '';
+        // const sanitizedUsername = msg.username ? msg.username : '';
         // Create the message content
         const h5 = document.createElement('h5');
         const span = document.createElement('span');
@@ -197,7 +209,7 @@ export function fetchAndRenderDirect() {
                 messageDiv.classList.add('unread'); // Add unread class for unread messages
             }
         }
-        
+
         messagesContainer.appendChild(messageDiv);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
@@ -368,7 +380,9 @@ export function fetchAndRenderDirect() {
                 currentReceiverId = user.ID;
                 document.getElementById("chatWith").textContent = user.Username;
                 document.getElementById("ChatArea").classList.remove("hidden");
-                markMessageAsRead(currentUserID, currentReceiverId)
+                
+                markMessageAsRead(currentReceiverId ,currentUserID);
+
               
                 fetchMessages(currentReceiverId);
             };
@@ -376,10 +390,10 @@ export function fetchAndRenderDirect() {
             userList.appendChild(userItem);
         });
     }
-    function markMessageAsRead(senderId , receivedId){
+    function markMessageAsRead(senderId , receiverId){
         const data = {
             sender_id: senderId,
-            receiver_id: receivedId
+            receiver_id: receiverId
         };
         fetch(`http://${window.location.hostname}:8080/messages/markAsRead`, {
             method : 'POST',
@@ -391,7 +405,7 @@ export function fetchAndRenderDirect() {
         .then(response => response.json())
         .then(data => {
             console.log('Messages marked as read:', data);
-            markMessageAsReadUI(receivedId);
+            markMessageAsReadUI(receiverId);
         })
         .catch(error => {
             console.error('Error marking messages as read:', error);
