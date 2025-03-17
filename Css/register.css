@@ -201,3 +201,87 @@ body {
 .image-section p {
     font-size: 1.1em;
 }
+
+/* Responsive styles */
+@media (max-width: 1024px) {
+    .register-container {
+        flex-direction: column;
+        max-width: 90%;
+        margin: 20px auto;
+    }
+
+    .register-form {
+        padding: 30px;
+    }
+
+    .image-section {
+        padding: 30px;
+    }
+
+    .register-form .title {
+        font-size: 22px;
+    }
+
+    .register-form input, .register-form select {
+        font-size: 14px;
+        padding: 10px;
+    }
+
+    .register-form .submit-btn {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 768px) {
+    .register-container {
+        max-width: 100%;
+        margin: 10px auto;
+    }
+
+    .register-form {
+        padding: 20px;
+    }
+
+    .image-section {
+        padding: 20px;
+    }
+
+    .register-form .title {
+        font-size: 20px;
+    }
+
+    .register-form input, .register-form select {
+        font-size: 12px;
+        padding: 8px;
+    }
+
+    .register-form .submit-btn {
+        padding: 8px 16px;
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .register-form .title {
+        font-size: 18px;
+    }
+
+    .register-form input, .register-form select {
+        font-size: 10px;
+        padding: 6px;
+    }
+
+    .register-form .submit-btn {
+        padding: 6px 12px;
+        font-size: 10px;
+    }
+
+    .image-section h2 {
+        font-size: 1.5em;
+    }
+
+    .image-section p {
+        font-size: 1em;
+    }
+}
