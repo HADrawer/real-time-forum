@@ -41,7 +41,7 @@ function renderCreatePost(data) {
                     </div>
                     
                     <div class="input-group">
-                        <textarea id="content" name="content" class="create-title" placeholder="Write your post content here..." maxlength="5000" required></textarea>
+                        <textarea id="contents" name="content" class="create-title" placeholder="Write your post content here..." maxlength="5000" required></textarea>
                         <div id="contentError" class="input-error"></div>
                     </div>
                     
@@ -63,10 +63,13 @@ function renderCreatePost(data) {
 function setupFormValidation() {
     const form = document.getElementById('createPostForm');
     const titleInput = document.getElementById('title');
-    const contentInput = document.getElementById('content');
+    const contentInput = document.getElementById('contents');
     const titleError = document.getElementById('titleError');
     const contentError = document.getElementById('contentError');
     const categoryError = document.getElementById('categoryError');
+    console.log('Form:', form);
+    console.log('Title Input:', titleInput);
+    console.log('Content Input:', contentInput);
     
     if (!form || !titleInput || !contentInput) return;
     
@@ -76,7 +79,7 @@ function setupFormValidation() {
     });
     
     contentInput.addEventListener('input', function() {
-        validateField(this, contentError, 'content');
+        validateField(this, contentError, 'contents');
     });
     
     // Form submission validation
@@ -89,22 +92,19 @@ function setupFormValidation() {
         }
         
         // Validate content
-        if (!validateField(contentInput, contentError, 'content')) {
+        if (!validateField(contentInput, contentError, 'contents')) {
             valid = false;
         }
         
         // Validate categories (at least one must be selected)
-        const categories = document.querySelectorAll('input[name="categories[]"]:checked');
         if (categories.length === 0) {
             categoryError.textContent = 'Please select at least one category.';
             categoryError.style.display = 'block';
+            document.querySelector('.categories').style.border = '1px solid red'; // Highlight category section
             valid = false;
         } else {
             categoryError.style.display = 'none';
-        }
-        
-        if (!valid) {
-            event.preventDefault();
+            document.querySelector('.categories').style.border = ''; // Remove highlight
         }
     });
 }
@@ -112,7 +112,11 @@ function setupFormValidation() {
 function validateField(field, errorElement, fieldType) {
     if (!field || !errorElement) return true;
     
-    const value = field.value.trim();
+    // Strip HTML tags from the input
+    const value = stripHtmlTags(field.value.trim());
+    
+    // Update the field value to the cleaned version
+    field.value = value;
     
     // Check if field is empty
     if (value === '') {
@@ -129,16 +133,15 @@ function validateField(field, errorElement, fieldType) {
         return false;
     }
     
-    // Check for HTML tags
-    if (/<[^>]*>/g.test(value)) {
-        errorElement.textContent = 'HTML tags are not allowed.';
-        errorElement.style.display = 'block';
-        return false;
-    }
-    
     // If all validations pass
     errorElement.style.display = 'none';
     return true;
+}
+
+// Function to strip HTML tags from a string
+function stripHtmlTags(text) {
+    if (!text) return '';
+    return text.replace(/<[^>]*>/g, '');
 }
 
 // Function to sanitize HTML and prevent XSS
