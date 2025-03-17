@@ -67,45 +67,67 @@ function setupFormValidation() {
     const titleError = document.getElementById('titleError');
     const contentError = document.getElementById('contentError');
     const categoryError = document.getElementById('categoryError');
+
     console.log('Form:', form);
     console.log('Title Input:', titleInput);
     console.log('Content Input:', contentInput);
-    
-    if (!form || !titleInput || !contentInput) return;
-    
+
+    if (!form || !titleInput || !contentInput) {
+        console.error('Form or input elements not found!');
+        return;
+    }
+
     // Input validation events
     titleInput.addEventListener('input', function() {
         validateField(this, titleError, 'title');
     });
-    
+
     contentInput.addEventListener('input', function() {
         validateField(this, contentError, 'contents');
     });
-    
+
     // Form submission validation
     form.addEventListener('submit', function(event) {
         let valid = true;
-        
+
         // Validate title
         if (!validateField(titleInput, titleError, 'title')) {
             valid = false;
         }
-        
+
         // Validate content
         if (!validateField(contentInput, contentError, 'contents')) {
             valid = false;
         }
-        
+
         // Validate categories (at least one must be selected)
+        const categories = document.querySelectorAll('input[name="categories[]"]:checked');
         if (categories.length === 0) {
             categoryError.textContent = 'Please select at least one category.';
             categoryError.style.display = 'block';
-            document.querySelector('.categories').style.border = '1px solid red'; // Highlight category section
+            // document.querySelector('.categories').style.border = '1px solid red'; // Highlight category section
             valid = false;
         } else {
             categoryError.style.display = 'none';
             document.querySelector('.categories').style.border = ''; // Remove highlight
         }
+
+        // Prevent form submission if validation fails
+        if (!valid) {
+            event.preventDefault();
+        }
+    });
+
+    // Add event listeners to category checkboxes to clear the error message when a category is selected
+    const categoryCheckboxes = document.querySelectorAll('input[name="categories[]"]');
+    categoryCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const categories = document.querySelectorAll('input[name="categories[]"]:checked');
+            if (categories.length > 0) {
+                categoryError.style.display = 'none'; // Hide error message if at least one category is selected
+                document.querySelector('.categories').style.border = ''; // Remove highlight
+            }
+        });
     });
 }
 
