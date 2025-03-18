@@ -41,20 +41,18 @@ export async function fetchAndRenderPost() {
         
         if (content && responseData.Post) {
             // Sanitize content from potential HTML
-            const sanitizedTitle = sanitizeHtml(responseData.Post.Title);
-            const sanitizedContent = sanitizeHtml(responseData.Post.Content);
-            const sanitizedAuthor = sanitizeHtml(responseData.Post.Author);
+            
             
             content.innerHTML = `
                 <div class="info-post">
                     <div class="comment-box">
-                        <h1>${sanitizedTitle}</h1>
+                        <h1 id="post-title"></h1>
                         <h3>Content:</h3>
                         <div class="post-content">
-                            <p>${sanitizedContent}</p>
+                            <p id="post-content"></p>
                         </div>
                         <div class="author-info">
-                            <p>Posted by <span class="author-name">${sanitizedAuthor}</span></p>
+                            <p>Posted by <span class="author-name" id="post-author"></span></p>
                         </div>
                     </div>
                     
@@ -79,12 +77,12 @@ export async function fetchAndRenderPost() {
                         <div class="comment-list">
                             ${responseData.Comments && responseData.Comments.length > 0 
                                 ? responseData.Comments.map(comment => `
-                                    <div class="Post-box">
-                                        <h3>${sanitizeHtml(comment.Author)}</h3>
+                                    <div class="Post-box" id="commment-${comment.ID}">
+                                        <h3 id="comment-author-${comment.ID}"></h3>
                                         <div class="comment-content">
-                                            <p class="comment-text">${sanitizeHtml(comment.Content)}</p>
+                                            <p class="comment-text" id="comment-content-${comment.ID}"></p>
                                         </div>
-                                        <h6>${sanitizeHtml(comment.Created_at)}</h6>
+                                        <h6 id="comment-date-${comment.ID}"></h6>
                                     </div>
                                 `).join("") 
                                 : `<p class="no-comments">No comments yet. Be the first to comment!</p>`
@@ -92,7 +90,20 @@ export async function fetchAndRenderPost() {
                         </div>
                     </div>
                 </div>`;
+
+                document.getElementById(`post-title`).textContent = responseData.Post.Title;
+                document.getElementById(`post-content`).textContent = responseData.Post.Content;
+                document.getElementById(`post-author`).textContent = responseData.Post.Author;
                 
+                if(responseData.Comments && responseData.Comments.length > 0) {
+                    responseData.Comments.forEach(comment => {
+                        document.getElementById(`comment-author-${comment.ID}`).textContent = comment.Author ;
+                        document.getElementById(`comment-content-${comment.ID}`).textContent = comment.Content ;
+                        document.getElementById(`comment-date-${comment.ID}`).textContent = comment.Created_at ;    
+                    });
+                }
+
+
             // Add event listener for comment validation
             setupCommentValidation();
         } else {
@@ -119,16 +130,7 @@ export async function fetchAndRenderPost() {
 }
 
 // Function to sanitize HTML and prevent XSS
-function sanitizeHtml(text) {
-    if (!text) return '';
-    
-    return String(text)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
+
 
 // Function to validate the comment form
 function validateCommentForm() {
@@ -154,11 +156,7 @@ function validateCommentForm() {
     }
     
     // Check for HTML tags
-    if (/<[^>]*>/g.test(comment)) {
-        errorEl.textContent = 'HTML tags are not allowed in comments.';
-        errorEl.style.display = 'block';
-        return false;
-    }
+  
     
     errorEl.style.display = 'none';
     return true;
@@ -172,12 +170,9 @@ function setupCommentValidation() {
     if (commentEl && errorEl) {
         commentEl.addEventListener('input', function() {
             // Check for HTML tags while typing
-            if (/<[^>]*>/g.test(this.value)) {
-                errorEl.textContent = 'HTML tags are not allowed in comments.';
-                errorEl.style.display = 'block';
-            } else {
+           
                 errorEl.style.display = 'none';
-            }
+            
         });
         
         // Add validation to the form

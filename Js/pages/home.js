@@ -31,7 +31,7 @@ export function fetchAndRenderHomePage() {
                     return `
                         <div class="content-home">
                             <div class="infoStupid">
-                                <a href="/Post?id=${post.ID}"><h3>${post.Title}</h3></a>
+                                <a href="/Post?id=${post.ID}"><h3 id="post-title-${post.ID}"></h3></a>
                                 <p>Posted by ${post.Author}</p>
                                 <div class="post-meta">
                                     <span class="timestamp">${getRandomTimestamp()}</span>
@@ -89,6 +89,14 @@ export function fetchAndRenderHomePage() {
                     </div>
                 `;
 
+
+                posts.forEach(post => {
+                    const titleElement = document.getElementById(`post-title-${post.ID}`);
+                    if (titleElement) {
+                        titleElement.textContent = post.Title;
+                    }
+                });
+
                 // Add event listeners for category links
                 document.querySelectorAll('.category-link').forEach(link => {
                     link.addEventListener('click', function(event) {
@@ -134,7 +142,7 @@ function filterPostsByCategory(category) {
                 return `
                     <div class="content">
                         <div class="infoStupid">
-                            <a href="/Post?id=${post.ID}"><h3>${post.Title}</h3></a>
+                            <a href="/Post?id=${post.ID}"><h3 id="post-title-${post.ID}"></h3></a>
                             <p>Posted by ${post.Author}</p>
                             <div class="post-meta">
                                 <span class="timestamp">${getRandomTimestamp()}</span>
@@ -155,7 +163,15 @@ function filterPostsByCategory(category) {
                 </div>
             `;
 
+            
             document.querySelector('.posts').innerHTML = postsHtml;
+            
+            filteredPosts.forEach(post => {
+                   const titleElement = document.getElementById(`post-title-${post.ID}`);
+                   if (titleElement) {
+                       titleElement.textContent = post.Title;
+                   }
+               });
         })
         .catch(error => {
             console.error("Error filtering posts by category:", error);

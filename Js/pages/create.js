@@ -21,8 +21,8 @@ function renderCreatePost(data) {
     
     const categoriesHTML = data.Categories.map(category => 
         `<label class="check">
-            <input type="checkbox" name="categories[]" value="${sanitizeHtml(category.Name)}">
-            <span>${sanitizeHtml(category.Name)}</span>
+            <input type="checkbox" name="categories[]" value="${category.Name}">
+            <span>${category.Name}</span>
         </label>`
     ).join("");
     
@@ -135,7 +135,7 @@ function validateField(field, errorElement, fieldType) {
     if (!field || !errorElement) return true;
     
     // Strip HTML tags from the input
-    const value = stripHtmlTags(field.value.trim());
+    const value = field.value;
     
     // Update the field value to the cleaned version
     field.value = value;
@@ -160,20 +160,3 @@ function validateField(field, errorElement, fieldType) {
     return true;
 }
 
-// Function to strip HTML tags from a string
-function stripHtmlTags(text) {
-    if (!text) return '';
-    return text.replace(/<[^>]*>/g, '');
-}
-
-// Function to sanitize HTML and prevent XSS
-function sanitizeHtml(text) {
-    if (!text) return '';
-    
-    return String(text)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
