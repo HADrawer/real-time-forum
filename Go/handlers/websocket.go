@@ -321,17 +321,43 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 
 
 
-func LoadMessages(w http.ResponseWriter,r *http.Request) {
-	userID, _ := GetUserIDFromSession(r)
-	userID2_String := r.URL.Query().Get("receiver_id")
+// Add this struct to websocket.go
+type PaginationParams struct {
+    ReceiverID int `json:"receiver_id"`
+    Offset    int `json:"offset"`
+    Limit     int `json:"limit"`
+}
 
-	userID2 , _ := strconv.Atoi(userID2_String)
-	messages , err := database.GetMessages(userID, userID2)
-	if err != nil {
-		log.Printf(" Error Load Messages : " , err)
-	}
+// Update LoadMessages handler to support pagination
+func LoadMessages(w http.ResponseWriter, r *http.Request) {
+    userID, _ := GetUserIDFromSession(r)
+    receiverIDStr := r.URL.Query().Get("receiver_id")
+    offsetStr := r.URL.Query().Get("offset")
+    limitStr := r.URL.Query().Get("limit")
 
-	json.NewEncoder(w).Encode(messages)
+    receiverID, _ := strconv.Atoi(receiverIDStr)
+    offset, _ := strconv.Atoi(offsetStr)
+    limit, _ := strconv.Atoi(limitStr)
+
+    // Default values if not provided
+    if limit == 0 {
+        limit = 10 // Default to 10 messages per load
+    }
+
+    messages, err := database.GetMessagesWithPagination(userID, receiverID, offset, limit)
+    if err != nil {
+        log.Printf("Error Load Messages: %v", err)
+        http.Error(w, "Error loading messages", http.StatusInternalServerError)
+        return
+    }
+
+    // Reverse the order so newest messages are at the bottom
+    for i, j := 0, len(messages)-1; i < j; i, j = i+1, j-1 {
+        messages[i], messages[j] = messages[j], messages[i]
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(messages)
 }
 // GetLastMessage fetches the last message between userID and the target user
 func GetLastMessage(userID, targetID int) (*MessageJson, error) {

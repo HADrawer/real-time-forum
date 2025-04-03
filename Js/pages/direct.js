@@ -1,5 +1,10 @@
 let currentUserID;
 let currentReceiverId;
+let messageOffset = 0;
+const messagesPerPage = 10;
+let isLoadingMessages = false;
+let allMessagesLoaded = false;
+let scrollThrottleTimeout;
 
 export function fetchAndRenderDirect() {
     // Dynamically load the messages.css file
@@ -32,8 +37,6 @@ export function fetchAndRenderDirect() {
     const messageInput = document.getElementById('messageInput');
     const messageError = document.getElementById('messageError');
     const sendMessageButton = document.getElementById('sendMessage');
-    // const userList = document.getElementById('userList');
-    // const chatWith = document.getElementById('chatWith');
     const chatVisible = document.getElementById('ChatArea');
     chatVisible.classList.add('hidden');
 
@@ -54,22 +57,30 @@ export function fetchAndRenderDirect() {
 
     socket.onmessage = (event) => {
         const msg = JSON.parse(event.data);
-
+    
         if (msg.type === "userListUpdate") {
             updateUserList(msg.data.users);
         } else if (msg.type === "message") {
-            if ((currentReceiverId === msg.data.sender_id) || (currentReceiverId === msg.data.receiver_id && msg.data.sender_id === currentUserID)) {
+            // Show message in both sender and receiver's chat if they're in the same conversation
+            if ((currentReceiverId === msg.data.receiver_id && msg.data.sender_id === currentUserID) || 
+                (currentReceiverId === msg.data.sender_id && msg.data.receiver_id === currentUserID)) {
                 displayMessage(msg.data);
+                // Scroll to bottom when new message arrives
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                
+                // If this is our own message, mark it as read immediately
+                if (msg.data.sender_id === currentUserID) {
+                    markMessageAsReadUI(currentReceiverId);
+                }
             } else {
-                showNotification(msg.data.username , msg.data.message);
+                showNotification(msg.data.username, msg.data.message);
             }
         } else if (msg.type === "offline") {
             alert(msg.data);
-        }else if (msg.type === "messagesRead") {
+        } else if (msg.type === "messagesRead") {
             const receiverId = msg.data.receiver_id;
             markMessageAsReadUI(receiverId);
-            fetchUsersAndUpdateList()
-
+            fetchUsersAndUpdateList();
         }
     };
 
@@ -78,14 +89,93 @@ export function fetchAndRenderDirect() {
             if (validateMessageInput()) {
                 sendMessage();
             }
-            e.preventDefault(); // Prevent default Enter behavior
+            e.preventDefault();
         }
     });
+
+    // Add scroll event listener with throttling
+    messagesContainer.addEventListener('scroll', handleScrollThrottled);
+
+    function handleScrollThrottled() {
+        if (!scrollThrottleTimeout) {
+            scrollThrottleTimeout = setTimeout(() => {
+                handleScroll();
+                scrollThrottleTimeout = null;
+            }, 200); // Throttle to 200ms
+        }
+    }
+
+    function handleScroll() {
+        // If we're near the top (within 50px) and not already loading
+        if (messagesContainer.scrollTop < 50 && 
+            !isLoadingMessages && 
+            !allMessagesLoaded) {
+            loadMoreMessages();
+        }
+    }
+
+    function loadMoreMessages() {
+        if (isLoadingMessages || allMessagesLoaded) return;
+        
+        isLoadingMessages = true;
+        
+        // Show loading indicator
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'loading-indicator';
+        loadingDiv.textContent = 'Loading older messages...';
+        messagesContainer.insertBefore(loadingDiv, messagesContainer.firstChild);
+        
+        // Calculate the next offset
+        const nextOffset = messageOffset + messagesPerPage;
+        
+        fetch(`http://${window.location.hostname}:8080/messages?receiver_id=${currentReceiverId}&offset=${nextOffset}&limit=${messagesPerPage}`)
+            .then(response => response.json())
+            .then(newMessages => {
+                // Remove loading indicator
+                messagesContainer.removeChild(loadingDiv);
+                
+                if (newMessages.length === 0) {
+                    allMessagesLoaded = true;
+                    return;
+                }
+                
+                // Store current scroll position
+                const oldScrollHeight = messagesContainer.scrollHeight;
+                const oldScrollTop = messagesContainer.scrollTop;
+                
+                // Add new messages to the top
+                const fragment = document.createDocumentFragment();
+                newMessages.reverse().forEach(msg => {
+                    fragment.appendChild(createMessageElement(msg));
+                });
+                
+                messagesContainer.insertBefore(fragment, messagesContainer.firstChild);
+                
+                // Adjust scroll position to maintain view
+                messagesContainer.scrollTop = messagesContainer.scrollHeight - oldScrollHeight + oldScrollTop;
+                
+                // Update offset for next load
+                messageOffset = nextOffset;
+                isLoadingMessages = false;
+                
+                // If we got fewer than requested, we've reached the beginning
+                if (newMessages.length < messagesPerPage) {
+                    allMessagesLoaded = true;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading more messages:', error);
+                if (loadingDiv.parentNode === messagesContainer) {
+                    messagesContainer.removeChild(loadingDiv);
+                }
+                isLoadingMessages = false;
+            });
+    }
 
     function setupMessageValidation() {
         if (messageInput && messageError) {
             messageInput.addEventListener('input', function() {
-                validateMessageInput(false); // Don't show error on typing
+                validateMessageInput(false);
             });
         }
     }
@@ -93,7 +183,6 @@ export function fetchAndRenderDirect() {
     function validateMessageInput(showError = true) {
         let message = messageInput.value.trim();
         
-        // Check if message is empty
         if (message === '') {
             if (showError) {
                 showMessageError('Please enter a message.');
@@ -101,11 +190,8 @@ export function fetchAndRenderDirect() {
             return false;
         }
         
-        // Remove HTML tags
-        
         messageInput.value = message;
         
-        // Hide error message
         hideMessageError();
         return true;
     }
@@ -123,27 +209,44 @@ export function fetchAndRenderDirect() {
         }
     }
 
-    function sendMessage() {
-        const message = messageInput.value.trim();
-        if (message && currentReceiverId) {
-            const msg = {
-                receiver_id: currentReceiverId,
-                message: message
-            };
-            socket.send(JSON.stringify(msg));
-            messageInput.value = '';
-            hideMessageError();
-            fetchMessages(currentReceiverId);
-        }
+   
+function sendMessage() {
+    const message = messageInput.value.trim();
+    if (message && currentReceiverId) {
+        const msg = {
+            receiver_id: currentReceiverId,
+            message: message
+        };
+        
+        // Create a temporary message element immediately
+        const tempMsg = {
+            sender_id: currentUserID,
+            receiver_id: currentReceiverId,
+            username: "You", // Or fetch current username
+            message: message,
+            createdTime: new Date().toISOString(),
+            isRead: 1 // Mark as read immediately for sender
+        };
+        
+        displayMessage(tempMsg);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        
+        // Clear input
+        messageInput.value = '';
+        hideMessageError();
+        
+        // Then send via WebSocket
+        socket.send(JSON.stringify(msg));
     }
+}
 
-    function showNotification(title , message) {
-        if(Notification.permission === "granted") {
-            new Notification(title , {body : message});
-        }else if (Notification.permission !== "denied") {
+    function showNotification(title, message) {
+        if (Notification.permission === "granted") {
+            new Notification(title, {body: message});
+        } else if (Notification.permission !== "denied") {
             Notification.requestPermission().then(permission => {
-                if ( permission === "granted") {
-                    new Notification(title , { body: message});
+                if (permission === "granted") {
+                    new Notification(title, { body: message});
                 }
             });
         }
@@ -154,216 +257,123 @@ export function fetchAndRenderDirect() {
             .then(response => response.json())
             .then(data => {
                 currentUserID = data.sender_id;
-                updateUserList(data.users); // Update the user list
+                updateUserList(data.users);
             })
             .catch(error => console.error('Error fetching users:', error));
     }
 
     function displayMessage(msg) {
+        messagesContainer.appendChild(createMessageElement(msg));
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    
+    function createMessageElement(msg) {
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('MessageContent');
 
-        const date = new Date(msg.createdTime);
-
+        const date = new Date(msg.Created_at || msg.createdTime);
         const day = date.getDate();
-        const month = date.getMonth() + 1;  // Months are 0-indexed, so we add 1
+        const month = date.getMonth() + 1;
         const hour = date.getHours();
         const minute = date.getMinutes();
-
         const formattedDate = `${day < 10 ? '0' + day : day}/${month < 10 ? '0' + month : month} ${hour < 10 ? '0' + hour : hour}:${minute < 10 ? '0' + minute : minute}`;
 
-        // Sanitize content to prevent XSS
-        const sanitizedContent = msg.message;
-        const sanitizedUsername = msg.username || '';
-
-        // const sanitizedMessage = msg.message;
-        // const sanitizedTime = msg.createdTime ? msg.createdTime : '';
-        // const sanitizedUsername = msg.username ? msg.username : '';
-        // Create the message content
         const h5 = document.createElement('h5');
         const span = document.createElement('span');
         const strong = document.createElement('strong');
         const time = document.createElement('time');
 
-        // Set innerHTML for the <strong> element
-        strong.innerText = `${sanitizedUsername}:`;
-        strong.innerText = ` ${sanitizedContent}`
-        // Set innerText for the sanitized content
+        strong.innerText = `${msg.Username || msg.username}:`;
+        strong.innerText = ` ${msg.Content || msg.message}`;
         span.appendChild(strong);
-        // span.appendChild(document.createTextNode(` ${sanitizedContent}`));
-
-        // Set the formatted date
         time.innerText = formattedDate;
 
-        // Append elements to the message
         h5.appendChild(span);
         h5.appendChild(time);
         messageDiv.appendChild(h5);
 
-        // Add classes based on message type
-        if (msg.Sender_ID === currentUserID && msg.Receiver_ID === currentReceiverId) {
+        if ((msg.Sender_ID === currentUserID || msg.sender_id === currentUserID) && 
+            (msg.Receiver_ID === currentReceiverId || msg.receiver_id === currentReceiverId)) {
             messageDiv.classList.add('sent');
-        } else if (msg.Receiver_ID === currentUserID) {
+        } else if (msg.Receiver_ID === currentUserID || msg.receiver_id === currentUserID) {
             messageDiv.classList.add('received');
-            if (msg.IsRead === 0) {
-                messageDiv.classList.add('unread'); // Add unread class for unread messages
+            if (msg.IsRead === 0 || msg.isRead === 0) {
+                messageDiv.classList.add('unread');
             }
         }
 
-        messagesContainer.appendChild(messageDiv);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        return messageDiv;
     }
-    
+
     function fetchMessages(receiver_id) {
-        fetch(`http://${window.location.hostname}:8080/messages?receiver_id=${receiver_id}`)
+        // Reset pagination state for new conversation
+        messageOffset = 0;
+        allMessagesLoaded = false;
+        isLoadingMessages = true;
+        
+        // Clear existing messages
+        messagesContainer.innerHTML = '';
+        
+        // Show initial loading indicator
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'loading-indicator';
+        loadingDiv.textContent = 'Loading messages...';
+        messagesContainer.appendChild(loadingDiv);
+        
+        fetch(`http://${window.location.hostname}:8080/messages?receiver_id=${receiver_id}&offset=0&limit=${messagesPerPage}`)
             .then(response => response.json())
             .then(messages => {
-                const messagesContainer = document.getElementById('messages');
-                messagesContainer.innerHTML = ''; // Clear previous messages
-    
-                if (Array.isArray(messages) && messages.length > 0) {
-                    messages.forEach(msg => {
-                        const messageDiv = document.createElement('div');
-                        messageDiv.classList.add('MessageContent');
-    
-                        const date = new Date(msg.Created_at);
-    
-                        const day = date.getDate();
-                        const month = date.getMonth() + 1;  // Months are 0-indexed, so we add 1
-                        const hour = date.getHours();
-                        const minute = date.getMinutes();
-    
-                        const formattedDate = `${day < 10 ? '0' + day : day}/${month < 10 ? '0' + month : month} ${hour < 10 ? '0' + hour : hour}:${minute < 10 ? '0' + minute : minute}`;
-    
-                        // Sanitize content to prevent XSS
-                        const sanitizedContent = msg.Content;
-                        const sanitizedUsername = msg.Username || '';
-    
-                        // Create the message content
-                        const h5 = document.createElement('h5');
-                        const span = document.createElement('span');
-                        const strong = document.createElement('strong');
-                        const time = document.createElement('time');
-    
-                        // Set innerHTML for the <strong> element
-                        strong.innerText = `${sanitizedUsername}:`;
-                        strong.innerText = ` ${sanitizedContent}`
-                        // Set innerText for the sanitized content
-                        span.appendChild(strong);
-                        // span.appendChild(document.createTextNode(` ${sanitizedContent}`));
-    
-                        // Set the formatted date
-                        time.innerText = formattedDate;
-    
-                        // Append elements to the message
-                        h5.appendChild(span);
-                        h5.appendChild(time);
-                        messageDiv.appendChild(h5);
-    
-                        // Add classes based on message type
-                        if (msg.Sender_ID === currentUserID && msg.Receiver_ID === currentReceiverId) {
-                            messageDiv.classList.add('sent');
-                        } else if (msg.Receiver_ID === currentUserID) {
-                            messageDiv.classList.add('received');
-                            if (msg.IsRead === 0) {
-                                messageDiv.classList.add('unread'); // Add unread class for unread messages
-                            }
-                        }
-    
-                        messagesContainer.appendChild(messageDiv);
+                // Remove loading indicator
+                messagesContainer.removeChild(loadingDiv);
+                
+                if (messages.length > 0) {
+                    // Add messages in reverse order (oldest first)
+                    messages.reverse().forEach(msg => {
+                        messagesContainer.appendChild(createMessageElement(msg));
                     });
+                    
+                    // Scroll to bottom to show newest messages
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    
+                    // Check if we've loaded all messages
+                    if (messages.length < messagesPerPage) {
+                        allMessagesLoaded = true;
+                    }
                 } else {
                     const noMessagesDiv = document.createElement('div');
                     noMessagesDiv.classList.add('MessageContent');
-                    noMessagesDiv.innerHTML = '<h5>No messages available</h5>';
+                    noMessagesDiv.textContent = 'No messages yet';
                     messagesContainer.appendChild(noMessagesDiv);
                 }
-    
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                
+                isLoadingMessages = false;
             })
             .catch(error => {
                 console.error('Error fetching messages:', error);
-                const messagesContainer = document.getElementById('messages');
-                messagesContainer.innerHTML = '<h5>Error fetching messages</h5>';
+                messagesContainer.removeChild(loadingDiv);
+                const errorDiv = document.createElement('div');
+                errorDiv.classList.add('MessageContent', 'error');
+                errorDiv.textContent = 'Error loading messages';
+                messagesContainer.appendChild(errorDiv);
+                isLoadingMessages = false;
             });
     }
 
-    // function fetchMessages(receiver_id) {
-    //     fetch(`http://${window.location.hostname}:8080/messages?receiver_id=${receiver_id}`)
-    //         .then(response => response.json())
-    //         .then(messages => {
-    //             const messagesContainer = document.getElementById('messages');
-    //             messagesContainer.innerHTML = ''; // Clear previous messages
-    
-    //             if (Array.isArray(messages) && messages.length > 0) {
-    //                 messages.forEach(msg => {
-    //                     const messageDiv = document.createElement('div');
-    //                     messageDiv.classList.add('MessageContent');
-                        
-    //                     const date = new Date(msg.Created_at);
-                        
-    //                     const day = date.getDate();
-    //                     const month = date.getMonth() + 1;  // Months are 0-indexed, so we add 1
-    //                     const hour = date.getHours();
-    //                     const minute = date.getMinutes();
-    
-    //                     const formattedDate = `${day < 10 ? '0' + day : day}/${month < 10 ? '0' + month : month} ${hour < 10 ? '0' + hour : hour}:${minute < 10 ? '0' + minute : minute}`;
-    
-    //                     // Sanitize content to prevent XSS
-    //                     const sanitizedContent = sanitizeHtml(msg.Content);
-    //                     const sanitizedUsername = sanitizeHtml(msg.Username || '');
-                        
-    //                     if (msg.Sender_ID === currentUserID && msg.Receiver_ID === currentReceiverId) {
-    //                         messageDiv.classList.add('sent');
-    //                         messageDiv.innerHTML = `
-    //                             <h5>
-    //                                 <span><strong>You:</strong> ${sanitizedContent}</span>
-    //                                 <time>${formattedDate}</time>
-    //                             </h5>`;
-    //                     } else if (msg.Receiver_ID === currentUserID) {
-    //                         messageDiv.classList.add('received');
-    //                         if (msg.IsRead === 0){
-    //                             messageDiv.classList.add('unread');
-    //                         }
-    //                         messageDiv.innerHTML = `
-    //                             <h5>
-    //                                 <span><strong>${sanitizedUsername}:</strong> ${sanitizedContent}</span>
-    //                                 <time>${formattedDate}</time>
-    //                             </h5>`;
-    //                     }
-    //                     messagesContainer.appendChild(messageDiv);
-    //                 });
-    //             } else {
-    //                 const noMessagesDiv = document.createElement('div');
-    //                 noMessagesDiv.classList.add('MessageContent');
-    //                 noMessagesDiv.innerHTML = '<h5>No messages available</h5>';
-    //                 messagesContainer.appendChild(noMessagesDiv);
-    //             }
-    
-    //             messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    //         })
-    //         .catch(error => {
-    //             console.error('Error fetching messages:', error);
-    //             const messagesContainer = document.getElementById('messages');
-    //             messagesContainer.innerHTML = '<h5>Error fetching messages</h5>';
-    //         });
-    // }
     function updateUserList(users) {
         const userList = document.getElementById("userList");
-        userList.innerHTML = ""; // Clear the current user list
+        userList.innerHTML = "";
 
         users.forEach(userObj => {
             const user = userObj.user;
             const isOnline = userObj.isOnline;
             const lastMessage = userObj.lastMessage;
 
-
             const userItem = document.createElement("li");
             const userNameSpan = document.createElement("span");
             userItem.textContent = user.Username;
 
-            if (lastMessage && (lastMessage.receiver_id === currentUserID) && lastMessage.isRead === 0)
-            {
+            if (lastMessage && (lastMessage.receiver_id === currentUserID || lastMessage.ReceiverID === currentUserID) && 
+                (lastMessage.isRead === 0 || lastMessage.IsRead === 0)) {
                 const notificationIndicator = document.createElement("span");
                 notificationIndicator.classList.add("notification-indicator");
                 userItem.appendChild(notificationIndicator);
@@ -381,22 +391,21 @@ export function fetchAndRenderDirect() {
                 document.getElementById("chatWith").textContent = user.Username;
                 document.getElementById("ChatArea").classList.remove("hidden");
                 
-                markMessageAsRead(currentReceiverId ,currentUserID);
-
-              
+                markMessageAsRead(currentReceiverId, currentUserID);
                 fetchMessages(currentReceiverId);
             };
 
             userList.appendChild(userItem);
         });
     }
-    function markMessageAsRead(senderId , receiverId){
+
+    function markMessageAsRead(senderId, receiverId) {
         const data = {
             sender_id: senderId,
             receiver_id: receiverId
         };
         fetch(`http://${window.location.hostname}:8080/messages/markAsRead`, {
-            method : 'POST',
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
@@ -410,15 +419,13 @@ export function fetchAndRenderDirect() {
         .catch(error => {
             console.error('Error marking messages as read:', error);
         });
-
     }
+
     function markMessageAsReadUI(receiverId) {
-        const messagesContainer = document.getElementById('messages');
         const messages = messagesContainer.querySelectorAll('.MessageContent');
 
         messages.forEach(messageDiv => {
-            if (messageDiv.classList.contains('received')&& currentReceiverId == receiverId) {
-
+            if (messageDiv.classList.contains('received') && currentReceiverId == receiverId) {
                 messageDiv.classList.remove('unread');
             }
         });
@@ -434,9 +441,6 @@ export function fetchAndRenderDirect() {
             }
         });
     }
-
-    // Function to sanitize HTML and prevent XSS
-   
 
     history.pushState({}, "direct", "/Direct");
 }

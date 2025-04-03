@@ -351,6 +351,32 @@ func GetAllUsers() ([]User, error) {
 
 //Messages Section
 
+func GetMessagesWithPagination(senderID, receiverID, offset, limit int) ([]Message, error) {
+    var messages []Message
+    query := `
+        SELECT id, sender_id, receiver_id, username, content, created_at, isRead 
+        FROM messages 
+        WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
+        ORDER BY created_at DESC
+        LIMIT ? OFFSET ?`
+
+    rows, err := db.Query(query, senderID, receiverID, receiverID, senderID, limit, offset)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    for rows.Next() {
+        var message Message
+        if err := rows.Scan(&message.ID, &message.Sender_ID, &message.Receiver_ID, 
+            &message.Username, &message.Content, &message.Created_at, &message.IsRead); err != nil {
+            return nil, err
+        }
+        messages = append(messages, message)
+    }
+
+    return messages, nil
+}
 func SaveMessage(senderID int , receiverID int , username string , content string, createdTime time.Time)  error {
 	stmt , err := db.Prepare("INSERT INTO messages (sender_id , receiver_id , username , content,created_at ) VALUES(?,?,?,?,?)")
 	if err != nil {

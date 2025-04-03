@@ -280,6 +280,12 @@ main#content {
     justify-content: space-between;
     align-items: flex-end;
 }
+.loading-indicator {
+    text-align: center;
+    padding: 10px;
+    color: #666;
+    font-style: italic;
+}
 
 .MessageContent h5 time {
     font-size: 12px;
