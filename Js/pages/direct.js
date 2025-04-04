@@ -49,7 +49,7 @@ export function fetchAndRenderDirect() {
         console.log("WebSocket connection established");
     };
 
-    sendMessageButton.addEventListener('click', () => {
+    sendMessageButton.addEventListener('click', () => { 
         if (validateMessageInput()) {
             sendMessage();
         }
@@ -101,7 +101,7 @@ export function fetchAndRenderDirect() {
             scrollThrottleTimeout = setTimeout(() => {
                 handleScroll();
                 scrollThrottleTimeout = null;
-            }, 200); // Throttle to 200ms
+            }, 200); // Thr ottle to 200ms
         }
     }
 
@@ -181,16 +181,15 @@ export function fetchAndRenderDirect() {
     }
 
     function validateMessageInput(showError = true) {
-        let message = messageInput.value.trim();
+        let message = messageInput.value;
         
-        if (message === '') {
+        // Check if message is empty or only contains whitespace
+        if (message.trim() === '') {
             if (showError) {
                 showMessageError('Please enter a message.');
             }
             return false;
         }
-        
-        messageInput.value = message;
         
         hideMessageError();
         return true;
@@ -211,7 +210,7 @@ export function fetchAndRenderDirect() {
 
    
 function sendMessage() {
-    const message = messageInput.value.trim();
+    const message = messageInput.value.trim();  // Trim only when sending
     if (message && currentReceiverId) {
         const msg = {
             receiver_id: currentReceiverId,
