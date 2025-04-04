@@ -296,6 +296,7 @@ main#content {
     
 }
 
+
 .MessageContent.sent h5 time {
     color: #e0e0e0; /* Lighter color for sent messages */
 }
