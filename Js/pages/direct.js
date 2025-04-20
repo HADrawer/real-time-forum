@@ -8,12 +8,12 @@ let scrollThrottleTimeout;
 
 export function fetchAndRenderDirect() {
     // Dynamically load the messages.css file
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = '/Css/messages.css';
-    document.head.appendChild(link);
+    // const link = document.createElement('link');
+    // link.rel = 'stylesheet';
+    // link.href = '/Css/messages.css';
+    // document.head.appendChild(link);
 
-    document.getElementById('content').innerHTML = `
+    document.getElementById('content1').innerHTML = `
         <div class="sidebar">
             <h2>Users</h2>
             <ul class="user-list" id="userList"></ul>
@@ -441,5 +441,5 @@ function sendMessage() {
         });
     }
 
-    history.pushState({}, "direct", "/Direct");
+
 }
