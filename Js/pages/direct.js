@@ -6,25 +6,26 @@ let isLoadingMessages = false;
 let allMessagesLoaded = false;
 let scrollThrottleTimeout;
 
-export function fetchAndRenderDirect() {
-    // Dynamically load the messages.css file
+export function fetchAndRenderDirect(targetSelector = '#content1') {
+    const target = document.querySelector(targetSelector);
+    if (!target) return;
+
+    // Load CSS dynamically
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = '/Css/messages.css';
     document.head.appendChild(link);
 
-    document.getElementById('content1').innerHTML = `
-        <div class="sidebar">
+    target.innerHTML = `
+         <div class="sidebar">
             <h2>Users</h2>
             <ul class="user-list" id="userList"></ul>
         </div>
-        <div class="chat-area" id="ChatArea">
+        <div class="chat-area hidden" id="ChatArea">
             <div class="chat-header">
                 Chat with <span id="chatWith"> </span>
             </div>
-            <div class="chat-messages" id="messages">
-                <!-- Messages will appear here -->
-            </div>
+            <div class="chat-messages" id="messages"></div>
             <div class="chat-input-container">
                 <input type="text" class="chat-input" id="messageInput" placeholder="Type a message..." />
                 <div id="messageError" class="message-error"></div>

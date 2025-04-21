@@ -9,10 +9,9 @@ import { renderNotFoundPage } from '../pages/notFound.js';
 
 export function handleNavigation() {
     let path = window.location.pathname;
-    console.log("Current path:", path); // Debugging
-    if(path !== "/login"  || path !== "/register" || path !== "/404") {
-        fetchAndRenderDirect();
-    }
+    // if(path !== "/login"  || path !== "/register" || path !== "/404") {
+    //     fetchAndRenderDirect();
+    // }
     if (path === "/") {
         fetchAndRenderHomePage();
     } else if (path === "/register") {
