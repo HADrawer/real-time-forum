@@ -34,16 +34,13 @@ export function fetchAndRenderHomePage() {
                                 <a href="/Post?id=${post.ID}"><h3 id="post-title-${post.ID}"></h3></a>
                                 <p>Posted by ${post.Author}</p>
                                 <div class="post-meta">
-                                    <span class="timestamp">${getRandomTimestamp()}</span>
+                                   
                                     <div class="categories-tags">
                                         <span class="category-tag">${categories}</span>
                                     </div>
                                 </div>
                             </div>
-                            <div class="stats">
-                                <span class="reply-count">${Math.floor(Math.random() * 50)}</span>
-                                <span class="reply-label">replies</span>
-                            </div>
+                            
                         </div>
                     `;
                 }).join('') : `
@@ -72,17 +69,7 @@ export function fetchAndRenderHomePage() {
                         
                         <!-- Main Content Area -->
                         <div class="posts">
-                            <!-- Sorting Dropdown -->
-                            <div class="sort-controls">
-                                <div>
-                                    <label for="sort-by">Sort by:</label>
-                                    <select id="sort-by" onchange="sortPosts(this.value)">
-                                        <option value="latest">Latest</option>
-                                        <option value="popular">Most Popular</option>
-                                        <option value="replies">Most Replies</option>
-                                    </select>
-                                </div>
-                            </div>
+                          
                             
                             ${postsHtml}
                         </div>
@@ -145,15 +132,14 @@ function filterPostsByCategory(category) {
                             <a href="/Post?id=${post.ID}"><h3 id="post-title-${post.ID}"></h3></a>
                             <p>Posted by ${post.Author}</p>
                             <div class="post-meta">
-                                <span class="timestamp">${getRandomTimestamp()}</span>
+                                
                                 <div class="categories-tags">
                                     <span class="category-tag">${categories}</span>
                                 </div>
                             </div>
                         </div>
                         <div class="stats">
-                            <span class="reply-count">${Math.floor(Math.random() * 50)}</span>
-                            <span class="reply-label">replies</span>
+                            
                         </div>
                     </div>
                 `;
@@ -188,10 +174,6 @@ function filterPostsByCategory(category) {
 }
 
 // Helper function to generate random timestamps for demo
-function getRandomTimestamp() {
-    const periods = ["Just now", "5 min ago", "10 min ago", "30 min ago", "1 hour ago", "3 hours ago", "8 hours ago", "Yesterday", "2 days ago"];
-    return periods[Math.floor(Math.random() * periods.length)];
-}
 
 // Function to sort posts (for demo purposes)
 function sortPosts(sortBy) {
