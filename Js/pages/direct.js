@@ -11,6 +11,7 @@ export function fetchAndRenderDirect(targetSelector = '#content1') {
     const target = document.querySelector(targetSelector);
     if (!target) return;
 
+    
     // Load CSS dynamically
     const link = document.createElement('link');
     link.rel = 'stylesheet';
