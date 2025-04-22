@@ -1,10 +1,11 @@
 let currentUserID;
 let currentReceiverId;
 let messageOffset = 0;
-const messagesPerPage = 10;
+const messagesPerPage = 15;
 let isLoadingMessages = false;
 let allMessagesLoaded = false;
 let scrollThrottleTimeout;
+let selectedUser = null;
 
 export function fetchAndRenderDirect(targetSelector = '#content1') {
     const target = document.querySelector(targetSelector);
@@ -15,24 +16,28 @@ export function fetchAndRenderDirect(targetSelector = '#content1') {
     link.rel = 'stylesheet';
     link.href = '/Css/messages.css';
     document.head.appendChild(link);
-
     target.innerHTML = `
-         <div class="sidebar">
-            <h2>Users</h2>
-            <ul class="user-list" id="userList"></ul>
+    <div class="sidebar">
+        <h2>Conversations</h2>
+        <ul class="user-list" id="userList"></ul>
+    </div>
+    <div class="chat-area hidden" id="ChatArea">
+        <div class="chat-header">
+            <button class="chat-back-btn" id="backToUsers">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Back
+            </button>
+            Chat with <span id="chatWith"></span>
         </div>
-        <div class="chat-area hidden" id="ChatArea">
-            <div class="chat-header">
-                Chat with <span id="chatWith"> </span>
-            </div>
-            <div class="chat-messages" id="messages"></div>
-            <div class="chat-input-container">
-                <input type="text" class="chat-input" id="messageInput" placeholder="Type a message..." />
-                <div id="messageError" class="message-error"></div>
-                <button class="chat-send" id="sendMessage">Send</button>
-            </div>
-        </div>`;
-
+        <div class="chat-messages" id="messages"></div>
+        <div class="chat-input-container">
+            <input type="text" class="chat-input" id="messageInput" placeholder="Type a message..." />
+            <div id="messageError" class="message-error"></div>
+            <button class="chat-send" id="sendMessage">Send</button>
+        </div>
+    </div>`;
     const socket = new WebSocket(`ws://${window.location.hostname}:8080/ws`);
     const messagesContainer = document.getElementById('messages');
     const messageInput = document.getElementById('messageInput');
@@ -74,10 +79,13 @@ export function fetchAndRenderDirect(targetSelector = '#content1') {
                     markMessageAsReadUI(currentReceiverId);
                 }
             } else {
+                // Show notification for message from other user
                 showNotification(msg.data.username, msg.data.message);
+                // Update user list to show new unread message indicator
+                fetchUsersAndUpdateList();
             }
         } else if (msg.type === "offline") {
-            alert(msg.data);
+            showToast(msg.data);
         } else if (msg.type === "messagesRead") {
             const receiverId = msg.data.receiver_id;
             markMessageAsReadUI(receiverId);
@@ -93,7 +101,10 @@ export function fetchAndRenderDirect(targetSelector = '#content1') {
             e.preventDefault();
         }
     });
-
+    document.getElementById('backToUsers')?.addEventListener('click', () => {
+        document.getElementById('ChatArea').classList.add('hidden');
+        document.querySelector('.sidebar').style.display = 'block';
+    });
     // Add scroll event listener with throttling
     messagesContainer.addEventListener('scroll', handleScrollThrottled);
 
@@ -102,7 +113,7 @@ export function fetchAndRenderDirect(targetSelector = '#content1') {
             scrollThrottleTimeout = setTimeout(() => {
                 handleScroll();
                 scrollThrottleTimeout = null;
-            }, 200); // Thr ottle to 200ms
+            }, 200); // Throttle to 200ms
         }
     }
 
@@ -209,44 +220,97 @@ export function fetchAndRenderDirect(targetSelector = '#content1') {
         }
     }
 
-   
-function sendMessage() {
-    const message = messageInput.value.trim();  // Trim only when sending
-    if (message && currentReceiverId) {
-        const msg = {
-            receiver_id: currentReceiverId,
-            message: message
-        };
+    function showToast(message) {
+        // Create toast container if it doesn't exist
+        let toastContainer = document.querySelector('.toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.className = 'toast-container';
+            toastContainer.style.position = 'fixed';
+            toastContainer.style.top = '20px';
+            toastContainer.style.right = '20px';
+            toastContainer.style.zIndex = '9999';
+            document.body.appendChild(toastContainer);
+        }
         
-        // Create a temporary message element immediately
-        const tempMsg = {
-            sender_id: currentUserID,
-            receiver_id: currentReceiverId,
-            username: "You", // Or fetch current username
-            message: message,
-            createdTime: new Date().toISOString(),
-            isRead: 1 // Mark as read immediately for sender
-        };
+        // Create toast
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.style.backgroundColor = '#333';
+        toast.style.color = 'white';
+        toast.style.padding = '10px 15px';
+        toast.style.borderRadius = '6px';
+        toast.style.marginBottom = '10px';
+        toast.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+        toast.style.transition = 'opacity 0.3s ease';
+        toast.style.opacity = '0';
+        toast.textContent = message;
         
-        displayMessage(tempMsg);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        toastContainer.appendChild(toast);
         
-        // Clear input
-        messageInput.value = '';
-        hideMessageError();
+        // Fade in
+        setTimeout(() => {
+            toast.style.opacity = '1';
+        }, 10);
         
-        // Then send via WebSocket
-        socket.send(JSON.stringify(msg));
+        // Fade out and remove after 3 seconds
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => {
+                if (toast.parentNode === toastContainer) {
+                    toastContainer.removeChild(toast);
+                }
+                // Remove container if empty
+                if (toastContainer.children.length === 0) {
+                    document.body.removeChild(toastContainer);
+                }
+            }, 300);
+        }, 3000);
     }
-}
+   
+    function sendMessage() {
+        const message = messageInput.value.trim();
+        if (message && currentReceiverId) {
+            const msg = {
+                receiver_id: currentReceiverId,
+                message: message
+            };
+            
+            // Create a temporary message element immediately
+            const tempMsg = {
+                sender_id: currentUserID,
+                receiver_id: currentReceiverId,
+                username: "You", // Or fetch current username
+                message: message,
+                createdTime: new Date().toISOString(),
+                isRead: 1 // Mark as read immediately for sender
+            };
+            
+            displayMessage(tempMsg);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            // Clear input
+            messageInput.value = '';
+            hideMessageError();
+            
+            // Then send via WebSocket
+            socket.send(JSON.stringify(msg));
+        }
+    }
 
     function showNotification(title, message) {
         if (Notification.permission === "granted") {
-            new Notification(title, {body: message});
+            new Notification(title, {
+                body: message,
+                icon: '/images/notification-icon.png'
+            });
         } else if (Notification.permission !== "denied") {
             Notification.requestPermission().then(permission => {
                 if (permission === "granted") {
-                    new Notification(title, { body: message});
+                    new Notification(title, { 
+                        body: message,
+                        icon: '/images/notification-icon.png'
+                    });
                 }
             });
         }
@@ -278,19 +342,15 @@ function sendMessage() {
         const minute = date.getMinutes();
         const formattedDate = `${day < 10 ? '0' + day : day}/${month < 10 ? '0' + month : month} ${hour < 10 ? '0' + hour : hour}:${minute < 10 ? '0' + minute : minute}`;
 
-        const h5 = document.createElement('h5');
-        const span = document.createElement('span');
-        const strong = document.createElement('strong');
-        const time = document.createElement('time');
+        const contentElement = document.createElement('div');
+        contentElement.classList.add('message-content-text');
+        contentElement.textContent = msg.Content || msg.message;
+        
+        const timeElement = document.createElement('time');
+        timeElement.textContent = formattedDate;
 
-        strong.innerText = `${msg.Username || msg.username}:`;
-        strong.innerText = ` ${msg.Content || msg.message}`;
-        span.appendChild(strong);
-        time.innerText = formattedDate;
-
-        h5.appendChild(span);
-        h5.appendChild(time);
-        messageDiv.appendChild(h5);
+        messageDiv.appendChild(contentElement);
+        messageDiv.appendChild(timeElement);
 
         if ((msg.Sender_ID === currentUserID || msg.sender_id === currentUserID) && 
             (msg.Receiver_ID === currentReceiverId || msg.receiver_id === currentReceiverId)) {
@@ -327,8 +387,8 @@ function sendMessage() {
                 messagesContainer.removeChild(loadingDiv);
                 
                 if (messages.length > 0) {
-                    // Add messages in reverse order (oldest first)
-                    messages.reverse().forEach(msg => {
+                    // Add messages in chronological order (newest at bottom)
+                    messages.forEach(msg => {
                         messagesContainer.appendChild(createMessageElement(msg));
                     });
                     
@@ -341,8 +401,11 @@ function sendMessage() {
                     }
                 } else {
                     const noMessagesDiv = document.createElement('div');
-                    noMessagesDiv.classList.add('MessageContent');
-                    noMessagesDiv.textContent = 'No messages yet';
+                    noMessagesDiv.classList.add('no-messages');
+                    noMessagesDiv.textContent = 'No messages yet. Say hello!';
+                    noMessagesDiv.style.textAlign = 'center';
+                    noMessagesDiv.style.padding = '2rem';
+                    noMessagesDiv.style.color = '#888';
                     messagesContainer.appendChild(noMessagesDiv);
                 }
                 
@@ -367,29 +430,71 @@ function sendMessage() {
             const user = userObj.user;
             const isOnline = userObj.isOnline;
             const lastMessage = userObj.lastMessage;
+            const hasUnread = lastMessage && 
+                              (lastMessage.receiver_id === currentUserID || lastMessage.ReceiverID === currentUserID) && 
+                              (lastMessage.isRead === 0 || lastMessage.IsRead === 0);
 
             const userItem = document.createElement("li");
-            const userNameSpan = document.createElement("span");
-            userItem.textContent = user.Username;
-
-            if (lastMessage && (lastMessage.receiver_id === currentUserID || lastMessage.ReceiverID === currentUserID) && 
-                (lastMessage.isRead === 0 || lastMessage.IsRead === 0)) {
+            userItem.classList.add('user-item');
+            
+            // Create user info container
+            const userInfoDiv = document.createElement('div');
+            userInfoDiv.classList.add('user-info');
+            
+            // User name
+            const userName = document.createElement('span');
+            userName.classList.add('user-name');
+            userName.textContent = user.Username;
+            userInfoDiv.appendChild(userName);
+            
+            // User status indicators container
+            const statusContainer = document.createElement('div');
+            statusContainer.classList.add('status-indicators');
+            
+            // Add notification indicator for unread messages
+            if (hasUnread) {
                 const notificationIndicator = document.createElement("span");
                 notificationIndicator.classList.add("notification-indicator");
-                userItem.appendChild(notificationIndicator);
+                // If we have a count of unread messages, we could show it here
+                notificationIndicator.textContent = "1"; // Default to 1 if count unknown
+                statusContainer.appendChild(notificationIndicator);
+                
+                // Add 'unread' class to highlight user with unread messages
+                userItem.classList.add('unread');
             }
+            
+            // Add online indicator
             if (isOnline) {
                 const onlineIndicator = document.createElement("span");
                 onlineIndicator.classList.add("online-indicator");
-                userItem.appendChild(onlineIndicator);
+                statusContainer.appendChild(onlineIndicator);
+                
+                // Add 'online' class to user item
+                userItem.classList.add('online');
+            }
+            
+            userItem.appendChild(userInfoDiv);
+            userItem.appendChild(statusContainer);
+            
+            // Set active class if this user is currently selected
+            if (currentReceiverId === user.ID) {
+                userItem.classList.add('selected');
             }
 
-            userItem.appendChild(userNameSpan);
-
             userItem.onclick = () => {
+                // Remove selected class from previous selection
+                const selectedItems = userList.querySelectorAll('.selected');
+                selectedItems.forEach(item => item.classList.remove('selected'));
+                
+                // Add selected class to current selection
+                userItem.classList.add('selected');
+                
                 currentReceiverId = user.ID;
                 document.getElementById("chatWith").textContent = user.Username;
                 document.getElementById("ChatArea").classList.remove("hidden");
+                
+                // Remove unread class once the user is selected
+                userItem.classList.remove('unread');
                 
                 markMessageAsRead(currentReceiverId, currentUserID);
                 fetchMessages(currentReceiverId);
@@ -414,33 +519,23 @@ function sendMessage() {
         .then(response => response.json())
         .then(data => {
             console.log('Messages marked as read:', data);
-            markMessageAsReadUI(receiverId);
+            markMessageAsReadUI(senderId);
+            fetchUsersAndUpdateList(); // Update user list to remove unread indicators
         })
         .catch(error => {
             console.error('Error marking messages as read:', error);
         });
     }
 
-    function markMessageAsReadUI(receiverId) {
+    function markMessageAsReadUI(senderId) {
         const messages = messagesContainer.querySelectorAll('.MessageContent');
 
         messages.forEach(messageDiv => {
-            if (messageDiv.classList.contains('received') && currentReceiverId == receiverId) {
+            if (messageDiv.classList.contains('received') && 
+                messageDiv.classList.contains('unread') && 
+                currentReceiverId == senderId) {
                 messageDiv.classList.remove('unread');
             }
         });
-
-        const userList = document.getElementById('userList');
-        const userItems = userList.querySelectorAll('li');
-        userItems.forEach(userItem => {
-            if (userItem.textContent === receiverId) {
-                const notificationIndicator = userItem.querySelector(".notification-indicator");
-                if (notificationIndicator) {
-                    notificationIndicator.remove();
-                }
-            }
-        });
     }
-
-
 }
