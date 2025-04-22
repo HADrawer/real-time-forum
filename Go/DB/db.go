@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/glebarez/sqlite"
 )
 
 var db *sql.DB
@@ -86,7 +86,7 @@ func Init() {
 	enableForeignKeys := "?_foreign_keys=on&cache=shared&mode=rwc"
 	dataSourceName := filepath.Join(dir, fileName) + enableForeignKeys
 
-	db, err = sql.Open("sqlite3", dataSourceName)
+	db, err = sql.Open("sqlite", dataSourceName)
 	if err != nil {
 		log.Fatal(err)
 	}
