@@ -61,14 +61,7 @@ type Message struct {
 	Created_at	time.Time
 	IsRead 		int
 }
-// type Message struct {
-//     ID         int       `json:"id"`
-//     Username   string    `json:"username"`
-//     SenderID   int       `json:"sender_id"`
-//     ReceiverID int       `json:"receiver_id"`
-//     Content    string    `json:"message"`
-//     Created_at time.Time `json:"created_time"`
-// }
+
 func Init() {
 	var err error
 
@@ -283,13 +276,28 @@ func GetAllPosts() ([]Post, error) {
 		for _, name := range categoryNames {
 			name = strings.TrimSpace(name)
 			if name != "" {
-				post.Category = append(post.Category, Category{Name: name})
-			}
+				categoryID , err := GetCategoryIDByName(name) 
+				if err != nil {
+					return nil , err
+				}
+				post.Category = append(post.Category, Category{ID: categoryID, Name: name})}
 		}
 		posts = append(posts, post)
 	}
 	return posts , nil
 }
+func GetCategoryIDByName(name string) (int, error) {
+	var id int
+	err := db.QueryRow("SELECT id FROM categories WHERE name = ?", name).Scan(&id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, fmt.Errorf("category '%s' not found", name)
+		}
+		return 0, fmt.Errorf("failed to retrieve category ID: %w", err)
+	}
+	return id, nil
+}
+
 func GetPostByID(postID int) (*Post,error) {
 	var post Post
 	err := db.QueryRow("SELECT id, user_id,title,content, author FROM posts WHERE id = ?", postID).
