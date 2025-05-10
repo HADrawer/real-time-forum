@@ -29,9 +29,13 @@ func main() {
 	http.HandleFunc("/Direct", handlers.DirectHandler)
 	http.HandleFunc("/ws", handlers.HandleConnections)
 	http.HandleFunc("/users", handlers.GetUsers)
-
-	go handlers.HandleMessages()
-
+	http.HandleFunc("/messages", handlers.LoadMessages)
+	http.HandleFunc("/messages/markAsRead", handlers.MarkMessagesAsRead)
+	
+	//error handler
+	http.HandleFunc("/404", func(w http.ResponseWriter, r *http.Request) {
+		handlers.RenderTemplate(w, nil)
+	})
 
 	log.Print("Server is running on http://localhost:8080")
 

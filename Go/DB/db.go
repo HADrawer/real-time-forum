@@ -9,8 +9,10 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
-	_ "github.com/mattn/go-sqlite3"
+
+	_ "github.com/glebarez/sqlite"
 )
 
 var db *sql.DB
@@ -50,6 +52,15 @@ type Category struct {
 	ID   int
 	Name string
 }
+type Message struct {
+	ID			int
+	Username	string
+	Sender_ID 	int
+	Receiver_ID int
+	Content		string
+	Created_at	time.Time
+	IsRead 		int
+}
 
 func Init() {
 	var err error
@@ -68,7 +79,7 @@ func Init() {
 	enableForeignKeys := "?_foreign_keys=on&cache=shared&mode=rwc"
 	dataSourceName := filepath.Join(dir, fileName) + enableForeignKeys
 
-	db, err = sql.Open("sqlite3", dataSourceName)
+	db, err = sql.Open("sqlite", dataSourceName)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -248,7 +259,7 @@ func CreatePost(userID int , title string, content string, categories string) er
 }
 func GetAllPosts() ([]Post, error) {
 	var posts []Post
-	rows , err := db.Query("SELECT id, user_id,title,content, author FROM posts")
+	rows , err := db.Query("SELECT id, user_id,title,content, author , category FROM posts")
 	if err != nil {
 		return nil, err
 	}
@@ -256,13 +267,37 @@ func GetAllPosts() ([]Post, error) {
 
 	for rows.Next() {
 		var post Post
-		if err := rows.Scan(&post.ID,&post.UserID,&post.Title,&post.Content,&post.Author); err != nil {
+		var categoriesStr string
+		if err := rows.Scan(&post.ID,&post.UserID,&post.Title,&post.Content,&post.Author, &categoriesStr); err != nil {
 			return nil,err
+		}
+		categoryNames := strings.Split(categoriesStr, ",")
+
+		for _, name := range categoryNames {
+			name = strings.TrimSpace(name)
+			if name != "" {
+				categoryID , err := GetCategoryIDByName(name) 
+				if err != nil {
+					return nil , err
+				}
+				post.Category = append(post.Category, Category{ID: categoryID, Name: name})}
 		}
 		posts = append(posts, post)
 	}
 	return posts , nil
 }
+func GetCategoryIDByName(name string) (int, error) {
+	var id int
+	err := db.QueryRow("SELECT id FROM categories WHERE name = ?", name).Scan(&id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, fmt.Errorf("category '%s' not found", name)
+		}
+		return 0, fmt.Errorf("failed to retrieve category ID: %w", err)
+	}
+	return id, nil
+}
+
 func GetPostByID(postID int) (*Post,error) {
 	var post Post
 	err := db.QueryRow("SELECT id, user_id,title,content, author FROM posts WHERE id = ?", postID).
@@ -319,4 +354,67 @@ func GetAllUsers() ([]User, error) {
 		users = append(users, user)
 	}
 	return users , nil
+}
+
+
+//Messages Section
+
+func GetMessagesWithPagination(senderID, receiverID, offset, limit int) ([]Message, error) {
+    var messages []Message
+    query := `
+        SELECT id, sender_id, receiver_id, username, content, created_at, isRead 
+        FROM messages 
+        WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
+        ORDER BY created_at DESC
+        LIMIT ? OFFSET ?`
+
+    rows, err := db.Query(query, senderID, receiverID, receiverID, senderID, limit, offset)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    for rows.Next() {
+        var message Message
+        if err := rows.Scan(&message.ID, &message.Sender_ID, &message.Receiver_ID, 
+            &message.Username, &message.Content, &message.Created_at, &message.IsRead); err != nil {
+            return nil, err
+        }
+        messages = append(messages, message)
+    }
+
+    return messages, nil
+}
+func SaveMessage(senderID int , receiverID int , username string , content string, createdTime time.Time)  error {
+	stmt , err := db.Prepare("INSERT INTO messages (sender_id , receiver_id , username , content,created_at ) VALUES(?,?,?,?,?)")
+	if err != nil {
+		return err
+	}
+	_, err = stmt.Exec(senderID,receiverID, username ,content,createdTime)
+	return err
+}
+
+func GetMessages(sender_id int , recevier_id int) ([]Message , error) {
+	var messages []Message
+	rows , err := db.Query("SELECT id , sender_id , receiver_id , username , content , created_at , isRead FROM messages WHERE  (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)" , sender_id , recevier_id , recevier_id , sender_id)
+	if err != nil {
+		return nil , err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var message Message
+		// var createdAt time.Time
+		if err := rows.Scan(&message.ID , &message.Sender_ID, &message.Receiver_ID ,&message.Username ,&message.Content , &message.Created_at , &message.IsRead ); err != nil {
+			return nil , err
+		}
+		// message.Created_at = createdAt.Format("2006-01-02 15:04:05")
+		messages = append(messages, message)
+	}
+	return messages , nil
+}
+
+func MarkMessagesAsRead(senderID , receiverID int) error {
+	_,err := db.Exec(`UPDATE messages SET isRead = 1 WHERE sender_id = ? AND receiver_id = ? AND isRead = 0`, senderID,receiverID)
+	return err
 }

@@ -34,41 +34,76 @@ func RenderTemplate(w http.ResponseWriter, data interface{}) {
 }
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		http.Redirect(w, r, "/", http.StatusFound)
-		return
-	}
-	_, isLoggedIn := GetUserIDFromSession(r)
-	if !isLoggedIn {
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
-	}
-	pageData := make(map[string]interface{})
+    // Check if the user is logged in
+    _, isLoggedIn := GetUserIDFromSession(r)
+    if !isLoggedIn {
+        http.Redirect(w, r, "/login", http.StatusSeeOther)
+        return
+    }
 
-	pageData["IsLoggedIn"] = isLoggedIn
+    // Prepare page data
+    pageData := make(map[string]interface{})
+    pageData["IsLoggedIn"] = isLoggedIn
 
-	posts, err := database.GetAllPosts()
-	if err != nil {
-		http.Error(w, "Unable to load posts", http.StatusInternalServerError)
-		// RenderTemplate(w, "500", nil)   // 500
-		return
-	}
-	isExist := true
-	if posts == nil {
-		isExist = false
-	}
-	var postDetails []map[string]interface{}
-	for _, post := range posts {
-		postDetail := map[string]interface{}{
-			"Id":     post.ID,
-			"Author": post.Author,
-			"Title":  post.Title,
-		}
-		postDetails = append(postDetails, postDetail)
-	}
-	pageData["isExist"] = isExist
-	pageData["Posts"] = postDetails
+    // Fetch all posts
+    posts, err := database.GetAllPosts()
+    if err != nil {
+        http.Error(w, "Unable to load posts", http.StatusInternalServerError)
+        return
+    }
 
-	RenderTemplate(w, pageData)
+    // Filter posts by category if a category is specified
+    category := r.URL.Query().Get("category")
+    if category != "" {
+        posts = filterPostsByCategory(posts, category)
+    }
+
+    // Check if posts exist
+    isExist := true
+    if posts == nil {
+        isExist = false
+    }
+
+    // Prepare post details
+    var postDetails []map[string]interface{}
+    for _, post := range posts {
+        postDetail := map[string]interface{}{
+            "Id":       post.ID,
+            "Author":   post.Author,
+            "Title":    post.Title,
+            "Category": post.Category, // Include the category in the post details
+        }
+        postDetails = append(postDetails, postDetail)
+    }
+
+    // Fetch all categories
+    categories, err := database.GetAllCategories()
+    if err != nil {
+        http.Error(w, "Unable to load categories", http.StatusInternalServerError)
+        return
+    }
+
+    // Add data to the pageData map
+    pageData["isExist"] = isExist
+    pageData["Posts"] = postDetails
+    pageData["Categories"] = categories // Add categories to the page data
+
+    // Render the template with the page data
+    RenderTemplate(w, pageData)
+}
+
+// Helper function to filter posts by category
+func filterPostsByCategory(posts []database.Post, category string) []database.Post {
+    var filteredPosts []database.Post
+    for _, post := range posts {
+        for _, cat := range post.Category {
+            if cat.Name == category {
+                filteredPosts = append(filteredPosts, post)
+                break
+            }
+        }
+    }
+    return filteredPosts
 }
 func HomeDataHandler(w http.ResponseWriter, r *http.Request) {
 
@@ -77,8 +112,14 @@ func HomeDataHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unable to load posts", http.StatusInternalServerError)
 		return
 	}
+	categories , err := database.GetAllCategories()
+	if err != nil {
+		http.Error(w,"Unable to load Categories", http.StatusInternalServerError)
+		return
+	}
 	responseData := map[string]interface{}{
 		"Posts": posts,
+		"Categories": categories,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -171,11 +212,12 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			user, err = database.GetUserByUsername(Email_UserName)
 		}
-
-		if err != nil || bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) != nil {
-			pageData := map[string]interface{}{
-				"InvalidLogin": "The Username or Password is Uncorrect",
-			}
+ // Check if the user exists and the password is correct
+ if err != nil || bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) != nil {
+	pageData := map[string]interface{}{
+		"IsLoggedIn":    false,
+		"InvalidLogin":  "The Username or Password is incorrect", // Error message
+	}
 			RenderTemplate(w, pageData)
 			return
 		}
@@ -200,17 +242,9 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.Method == http.MethodGet {
-		// Categories, _ := database.GetAllCategories()
 		pageData := make(map[string]interface{})
-		// var postDetails []map[string]interface{}
-		// for _, Category := range Categories {
-		// 	postDetail := map[string]interface{}{
-		// 		"Category": Category.Name,
-		// 	}
-		// 	postDetails = append(postDetails, postDetail)
-		// }
+		
 		pageData["IsLoggedIn"] = isLoggedIn
-		// pageData["Categories"] = postDetails
 
 		RenderTemplate(w, pageData)
 		return
@@ -223,7 +257,7 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		if title == "" || content == "" || len(categories) == 0 {
 
 			http.Error(w, "Bad request: Missing PostID or Comment", http.StatusBadRequest)
-
+			return
 		}
 
 		err := database.CreatePost(userID, title, content, stringCategories)

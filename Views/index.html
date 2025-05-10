@@ -4,13 +4,20 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="/Css/styles.css">
+        <!-- <link rel="stylesheet" href="/Css/styles.css"> -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
         <title>Main Page</title>
     </head>
 
     <body>
-        <script src="/Js/app.js"></script>
+        <script type="module" src="../Js/app.js"></script>
+        <!-- <script type="module" src="../Js/"></script>
+        <script type="module" src="../Js/pages/home.js"></script>
+        <script type="module" src="../Js/pages/register.js"></script>
+        <script type="module" src="../Js/utils/navigation.js"></script>
+     -->
+        
+       
         <!-- the header is static between all pages except log in
         Note: we need to find a solution for log in page for header
         Maybe we can use {if log-in} {end} 
@@ -23,7 +30,6 @@
                 <nav>
                 <ul>
                     <li><a href="/Create"> Create Post</a></li>
-                    <li><a href="/Direct">messages</a></li>
                     <button class="Headerbutton" id="logoutBtn">Log out</button>
                         <script>
                             document.getElementById("logoutBtn").addEventListener("click", () => {
@@ -41,8 +47,11 @@
                 <!-- <h1 class="UserName">hashem</h1> -->
             </div>
         </header>
+        <main id="content1">
+            <script type="module" src="../Js/pages/direct.js"></script>
+            
+        </main>
         {{end}}
-        
         <main id="content">
                 <!-- Dynamic contant-->
 
@@ -51,10 +60,18 @@
                 
                     
         </main>
-        
+        {{if .IsLoggedIn}} 
         <footer>
             <p>&copy; 2025 Greatest Real-Time Forum .All rights reserved</p>
         </footer>
+        
+        <div class="chat-toggle-button" id="chatToggleBtn">&#x25B2;</div>
+        
+        <!-- Chat drawer container -->
+        <div class="global-chat-container hidden" id="globalChatContainer">
+            <!-- This will be populated dynamically by direct.js -->
+        </div>
+        {{end}}
     </body>
 
 </html>

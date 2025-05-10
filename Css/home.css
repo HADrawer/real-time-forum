@@ -1,0 +1,387 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, 
+        Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+/* Header styles - same as create.css */
+header {
+    background-color: #C29DC2;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.headerDiv {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.Project-Name a {
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+}
+
+.Project-Name a:before {
+    content: '';
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    margin-right: 10px;
+    background-color: white;
+    border-radius: 50%;
+}
+
+nav ul {
+    display: flex;
+    list-style: none;
+    align-items: center;
+}
+
+nav ul li {
+    margin-left: 25px;
+}
+
+nav ul li a {
+    color: white;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: opacity 0.2s;
+}
+
+nav ul li a:hover {
+    opacity: 0.8;
+}
+
+.Headerbutton {
+    background-color: white;
+    color: #C29DC2;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 20px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-left: 25px;
+    transition: background-color 0.2s;
+}
+
+.Headerbutton:hover {
+    background-color: #f0f0f0;
+}
+
+/* Body styles */
+body {
+    background-color: #f9f9f9;
+}
+
+/* Main Banner */
+.welcome-banner {
+    background-color: white;
+    text-align: center;
+    padding: 30px 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eaeaea;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.welcome-banner h1 {
+    color: #333;
+    font-size: 28px;
+    margin-bottom: 10px;
+}
+
+.welcome-banner p {
+    color: #666;
+    font-size: 16px;
+}
+
+/* Content wrapper */
+.content-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    padding: 0 20px;
+}
+
+/* Left Sidebar */
+.sidebar-home {
+    width: 240px;
+    background-color: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-right: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.sidebar-home h3 {
+    color: #333;
+    font-size: 18px;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eaeaea;
+}
+
+.sidebar-home ul {
+    list-style: none;
+}
+
+.sidebar-home li {
+    margin-bottom: 10px;
+}
+
+.sidebar-home a {
+    color: #555;
+    text-decoration: none;
+    display: block;
+    padding: 8px 10px;
+    border-radius: 5px;
+    transition: all 0.2s;
+}
+
+.sidebar-home a:hover {
+    background-color: #f5f5f5;
+    color: #C29DC2;
+}
+
+.sidebar-home .active {
+    background-color: #f0e6f0;
+    color: #C29DC2;
+    font-weight: 500;
+}
+
+/* Posts section */
+.posts {
+    flex: 1;
+}
+
+/* Sorting dropdown */
+.sort-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    background-color: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.sort-controls select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: white;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.sort-controls select:focus {
+    outline: none;
+    border-color: #C29DC2;
+}
+
+/* Post items */
+.content-home {
+    background-color: white;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    display: flex;
+    justify-content: space-between;
+    transition: transform 0.2s;
+}
+
+.content-.content-home {
+    transform: translateY(-2px);
+}
+
+.infoStupid {
+    flex: 1;
+}
+
+.infoStupid h3 {
+    font-size: 18px;
+    margin-bottom: 8px;
+}
+
+.infoStupid a {
+    text-decoration: none;
+    color: #333;
+}
+
+.infoStupid a:hover h3 {
+    color: #C29DC2;
+}
+
+.infoStupid p {
+    color: #777;
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+
+.post-meta {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.timestamp {
+    font-size: 12px;
+    color: #999;
+    margin-right: 15px;
+}
+
+.categories-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.category-tag {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    background-color: #f0e6f0;
+    color: #C29DC2;
+}
+
+.stats {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    min-width: 80px;
+}
+
+.reply-count {
+    font-size: 20px;
+    font-weight: bold;
+    color: #C29DC2;
+}
+
+.reply-label {
+    font-size: 12px;
+    color: #999;
+}
+
+/* Footer styling - same as create.css */
+footer {
+    text-align: center;
+    padding: 10px;
+    background-color: #f5f5f5;
+    color: #666;
+    border-top: 1px solid #eaeaea;
+    margin-top: 40px;
+}
+
+/* For empty state */
+.no-posts {
+    background-color: white;
+    border-radius: 8px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.no-posts h1 {
+    color: #999;
+    font-size: 20px;
+}
+
+/* Responsive styles */
+@media (max-width: 1024px) {
+    .content-wrapper {
+        flex-direction: column;
+        padding: 0 10px;
+    }
+
+    .sidebar-home {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+
+    .sort-controls {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 768px) {
+    .welcome-banner h1 {
+        font-size: 24px;
+    }
+
+    .welcome-banner p {
+        font-size: 14px;
+    }
+
+    .content-home {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .infoStupid h3 {
+        font-size: 16px;
+    }
+
+    .infoStupid p {
+        font-size: 12px;
+    }
+
+    .reply-count {
+        font-size: 18px;
+    }
+
+    .reply-label {
+        font-size: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .welcome-banner h1 {
+        font-size: 20px;
+    }
+
+    .welcome-banner p {
+        font-size: 12px;
+    }
+
+    .sidebar-home h3 {
+        font-size: 16px;
+    }
+
+    .content-home {
+        padding: 15px;
+    }
+
+    .infoStupid h3 {
+        font-size: 14px;
+    }
+
+    .infoStupid p {
+        font-size: 10px;
+    }
+
+    .reply-count {
+        font-size: 16px;
+    }
+
+    .reply-label {
+        font-size: 8px;
+    }
+}
